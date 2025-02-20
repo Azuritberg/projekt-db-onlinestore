@@ -4,7 +4,6 @@ function renderAdminLoginPage() {
 
     document.body.innerHTML = "";
 
-    // Skapa <main> element
     const main = document.createElement("main");
     main.id = "adminLoginPage";
 
@@ -32,6 +31,7 @@ function renderAdminLoginPage() {
 
     topButtons.appendChild(adminButton);
     topButtons.appendChild(customerButton);
+
 
     // Input fields, Bottom buttons container
     const inputField = document.createElement("div");
@@ -73,7 +73,6 @@ function renderAdminLoginPage() {
 
     document.body.appendChild(main);
 
-    // Anropa funktion => lägga till event listeners
     setupEventListeners(adminButton, customerButton, loginButton, registerButton, usernameInput, passwordInput);
 }
 
@@ -126,7 +125,7 @@ function setupEventListeners(adminButton, customerButton, loginButton, registerB
     // Registreringsknapp?
     registerButton.addEventListener("click", function () {
         alert("Går till registreringssida...");
-        window.location.href = "register.html"; // Ändra till din registreringssida
+        window.location.href = "register.html"; // Ändra till registreringssida
     });
 }
 
