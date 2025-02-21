@@ -8,16 +8,14 @@
 }
 
 
-/*
-
-/* ----- HEADER STYLING -----
-#costumerProductPage {
+/* ----- HEADER STYLING ----- */
+#adminProductPage {
     width: 100%;
     max-width: 1100px;
     margin: auto;
 }
 
-/* -- Titeln --
+/* -- Titeln -- */
 .title-DB-container {
     display: flex;
     justify-content: space-between;
@@ -45,11 +43,11 @@
     color: #2B0AE4;
 }
 
-/* -- Logout-knapp och cart --
+/* -- Logout-knapp och cart -- */
 .top-button-logout {
     display: flex;
     flex-direction: column;
-    /*justify-content: flex-end;
+    /*justify-content: flex-end;*/
     align-items: center;
     margin-bottom: 20px;
 }
@@ -85,7 +83,7 @@
     padding-top: 3px;
 }
 
-/* ----- SEARCH FORM -----
+/* ----- SEARCH FORM ----- */
 #placeItemsForm {
     width: 100%;
     display: flex;
@@ -101,7 +99,7 @@
     gap: 5px;
 }
 
-/* -- Justera toppsektionen --
+/* -- Justera toppsektionen -- */
 .input-top {
     display: flex;
     gap: 5px;
@@ -136,7 +134,7 @@
     text-align: center;
 }
 
-/* -- Justera bottensektionen --
+/* -- Justera bottensektionen -- */
 .input-bottom {
     display: flex;
     gap: 5px;
@@ -151,14 +149,14 @@
     color: #2B0AE4;
 }
 
-/* -- Mellanrumsstreck mellan Price Min & Max --
+/* -- Mellanrumsstreck mellan Price Min & Max -- */
 .line-between-price {
     font-size: 1.2rem;
     color: #2B0AE4;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 30px;  /* 3%
+    width: 30px;  /* 3% */
 }
 
 #price-max {
@@ -177,18 +175,18 @@
     color: #2B0AE4;
 }
 
-/* ----- PRODUKTSEKTION -----
+/* ----- PRODUKTSEKTION ----- */
 #item-container-costumer {
     width: 100%;
 }
 
-.product-list-header {
+.product-list-header-admin {
     display: flex;
     font-weight: bold;
     margin-bottom: 3px;
-    /*padding: 0 8px 0 10px;
+    /*padding: 0 8px 0 10px;*/
     gap: 5px;
-    width: 82.5%;
+    width: 87.5%;
     color: #2B0AE4;
 }
 
@@ -215,7 +213,7 @@
     color: #2B0AE4;
 }
 
-/* -- Produktlistan --
+/* -- Produktlistan -- */
 .product-item {
     display: flex;
     padding: 3px 0 3px 0;
@@ -235,7 +233,7 @@
     padding: 5px 10px;
     cursor: pointer;
     font-size: 1rem;
-    font-weight: 600; /* Semibold
+    font-weight: 600; /* Semibold */
     font-family: 'Rethink Sans', sans-serif;
 }
 
@@ -245,12 +243,11 @@ span.quantity {
     text-align: center;
     font-size: 1rem;
     border: 2px solid #2B0AE4;
-    font-weight: 600; /* Semibold
+    font-weight: 600; /* Semibold */
     font-family: 'Rethink Sans', sans-serif;
     padding: 8px;
     color: #2B0AE4;
 }
-*/
 
 /*
 .quantity {
@@ -264,154 +261,3 @@ span.quantity {
     color: #2B0AE4;
 }
 */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-:root{
-    --black:#000000;
-    --white:#FFFFFF;
-
-    --blue:rgba(49, 0, 211, 0.7)
-    --orange:#f87122;
-    --border-radios: 10px;
-}
-
-
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-
-/*
-#adminLoginPage{
-    display: flex;
-    flex-direction: column;
-    margin: auto;
-    width: fit-content;
-    margin-top: 8rem;
-}
-
-.title-DB {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-.title-DB h1 {
-    color: #2B0AE4;
-    font-family: "Schibsted Grotesk", serif;
-    font-style: normal;
-    font-size: 8rem;
-    font-weight: 900;
-    line-height: 121px;
-    letter-spacing: -2px;
-}
-.title-DB span {
-    display: flex;
-    font-size: 6rem;
-    font-weight: 900;
-    letter-spacing: -1px;
-}
-
-#loginForm {
-    display: flex;
-    width: 25rem;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 0.5rem;
-    margin-top: 3rem;
-}
-
-.top-buttons {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.top-buttons button {
-    border: 2px solid #2B0AE4;
-    background: none;
-    padding: 10px 16px;
-    font-size: 1rem;
-    cursor: pointer;
-    color: #2B0AE4;
-    font-weight: 600; /* Semibold
-    font-family: 'Rethink Sans', sans-serif;
-}
-
-.input-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
-}
-
-.input-field input {
-    width: 100%;
-    padding: 10px;
-    border: 2px solid #2B0AE4;
-    font-size: 1rem;
-    color: #2B0AE4;
-    font-weight: 400; /* Regular
-    font-family: 'Rethink Sans', sans-serif;
-}
-
-.bottom-button {
-    display: flex;
-    align-items: center;
-    gap: 5rem;
-}
-
-.bottom-button .login {
-    border: 2px solid #2B0AE4;
-    background: none;
-    padding: 10px 78px;
-    font-size: 1rem;
-    cursor: pointer;
-    color: #2B0AE4;
-    font-weight: 600; /* Semibold
-    font-family: 'Rethink Sans', sans-serif;
-}
-
-.bottom-button .register {
-    background: none!important;
-    border: none;
-    padding: 0!important;
-    background: none;
-    text-decoration: underline;
-    font-size: 1rem;
-    cursor: pointer;
-    color: #2B0AE4;
-    font-weight: 600; /* Semibold
-    font-family: 'Rethink Sans', sans-serif;
-}
-
-.active {
-    background-color: #2B0AE4;
-    color: white;
-}
-
-.inactive {
-    background-color: transparent;
-    color: #2B0AE4;
-}
-
-/*
