@@ -164,26 +164,26 @@ function renderAdminProductPage() {
         const productActions = document.createElement("div");
         productActions.className = "product-actions";
 
-        const decreaseBtn = document.createElement("button");
-        decreaseBtn.className = "decrease";
-        decreaseBtn.textContent = "-";
+        const editBtn = document.createElement("button");
+        editBtn.className = "edit-btn";
+        editBtn.textContent = "Edit";
 
         const quantity = document.createElement("span");
         quantity.className = "quantity";
         quantity.textContent = "Qty";
 
-        const increaseBtn = document.createElement("button");
-        increaseBtn.className = "increase";
-        increaseBtn.textContent = "+";
+        const discountsBtn = document.createElement("button");
+        discountsBtn.className = "discounts-btn";
+        discountsBtn.textContent = "Discounts";
 
-        //const buyBtn = document.createElement("button");
-        //buyBtn.className = "buy";
-        //buyBtn.textContent = "Buy";
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "remove-btn";
+        removeBtn.textContent = "Remove";
 
-        productActions.appendChild(decreaseBtn);
+        productActions.appendChild(editBtn);
         productActions.appendChild(quantity);
-        productActions.appendChild(increaseBtn);
-        //productActions.appendChild(buyBtn);
+        productActions.appendChild(discountsBtn);
+        productActions.appendChild(removeBtn);
 
         productItem.appendChild(productId);
         productItem.appendChild(productName);
