@@ -103,6 +103,18 @@ function renderAdminProductPage() {
     inputField.appendChild(inputBottom);
     formContainer.appendChild(inputField);
 
+    // == ADMIN HANTERINGSKNAPPAR ==
+    const productListManageAdmin = document.createElement("div");
+    productListManageAdmin.className = "product-list-manage-admin";
+
+    const manageItems = ["Add new product", "Manage orders", "Manage suppliers", "Manage discounts"];
+    manageItems.forEach((text) => {
+        const manageBtn = document.createElement("button");
+        manageBtn.className = "manage-btn";
+        manageBtn.textContent = text;
+        productListManageAdmin.appendChild(manageBtn);
+    });
+
     // == PRODUKTLISTA ==
     const itemContainer = document.createElement("div");
     itemContainer.id = "item-container-costumer";
@@ -199,6 +211,7 @@ function renderAdminProductPage() {
 
     main.appendChild(titleContainer);
     main.appendChild(formContainer);
+    main.appendChild(productListManageAdmin);
     main.appendChild(itemContainer);
     document.body.appendChild(main);
 }

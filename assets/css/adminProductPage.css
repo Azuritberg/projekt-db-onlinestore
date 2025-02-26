@@ -176,6 +176,29 @@
     color: #2B0AE4;
 }
 
+
+/* ----- MANAGESEKTION ----- */
+.product-list-manage-admin {
+    display: flex;
+    width: 100%;
+    max-width: 72.2%;
+    gap: 5px;
+    margin-bottom: 6px;
+}
+
+.manage-btn {
+    flex: 1;
+    padding: 10px 15px;
+    border: 2px solid #2B0AE4;
+    background-color: #CBC2FF;  /* Vet inte om vi ska ha färg i knapparna eller inte */
+    /*background: none;*/
+    color: #2B0AE4;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+
 /* ----- PRODUKTSEKTION ----- */
 #item-container-costumer {
     width: 100%;
@@ -187,7 +210,7 @@
     margin-bottom: 3px;
     /*padding: 0 8px 0 10px;*/
     gap: 5px;
-    width: 72.2%; /*87.5%*, 82.5%/
+    width: 72.2%; /*87.5%*, 82.5%*/
     color: #2B0AE4;
 }
 
