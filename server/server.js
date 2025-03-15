@@ -15,7 +15,7 @@ export default class Server {
     password = prompt("psql password:");
     db = prompt("psql db:");
 
-    psql = postgres(
+    const psql = postgres(
       `postgres://${user}:${password}@pgserver.mau.se:5432/${db}`,
     );
 
