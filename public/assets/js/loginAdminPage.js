@@ -1,6 +1,10 @@
 "use strict";
 
-function renderAdminLoginPage() {
+import { renderAdminLoginPage } from "./js/loginAdminPage.js";
+//import { renderAdminProductPage };
+
+
+export function renderAdminLoginPage() {
 
     document.body.innerHTML = "";
 
@@ -114,9 +118,9 @@ function setupEventListeners(adminButton, customerButton, loginButton, registerB
                 console.log("Login successful! Token:", data.token);
 
                 if (userType === "admin") {
-                    window.location.href = "..."; // ange rätt renderings sida admin
+                    renderAdminLoginPage();
                 } else {
-                    window.location.href = "..."; // ange rätt renderings sida costumer
+                    //.... sätt rätt endpoint
                 }
 
             } else if (response.status === 401) {

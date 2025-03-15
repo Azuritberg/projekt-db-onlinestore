@@ -1,6 +1,8 @@
 "use strict";
 
-function renderCostumerLoginPage() {
+//import { renderCostumerLoginPage } from "./js/loginCostumerPage.js";
+
+export function renderCostumerLoginPage() {
 
     document.body.innerHTML = "";
 
@@ -81,7 +83,7 @@ function renderCostumerLoginPage() {
 // Funktion => lägga till eventlisteners
 function setupEventListeners(adminButton, customerButton, loginButton, registerButton, usernameInput, passwordInput) {
     let userType = "customer";
-    adminButton.classList.add("active");
+    customerButton.classList.add("active");
 
     adminButton.addEventListener("click", function () {
         userType = "admin";
@@ -116,9 +118,9 @@ function setupEventListeners(adminButton, customerButton, loginButton, registerB
                 console.log("Login successful! Token:", data.token);
 
                 if (userType === "customer") {
-                    window.location.href = "..."; // ange rätt sida admin
+                    renderCostumerLoginPage ();
                 } else {
-                    window.location.href = "..."; // ange rätt sida costumer
+                    //... sätt rätt endpoint
                 }
 
             } else if (response.status === 401) {

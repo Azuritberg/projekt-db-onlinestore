@@ -3,7 +3,7 @@
 // export {...}
 // import { renderCustomerProductPage } from "./.....";
 
-function renderCustomerProductPage() {
+export function renderCustomerProductPage() {
 
     document.body.innerHTML = "";
 
