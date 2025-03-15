@@ -35,17 +35,47 @@ export default class Server {
     }
 
     const data = await req.json();
+    const headers = req.headers;
     const path = new URL(req.url).pathname;
 
-    switch (path) {
-      case "/login":
-        return await this.api.login(data);
+    if (path === "/login") {
+      if (!hasKeys(data, ["email", "password"])) {
+        return sendRes(400, {
+          error: `${req.method} requests to this endpoint must contain user credentials`,
+        });
+      }
 
-      case "/register":
-        return await this.api.register(data);
+      return await this.api.login(data);
+    } else if (path === "/register") {
+      if (
+        !hasKeys(data, [
+          "email",
+          "password",
+          "fName",
+          "lName",
+          "address",
+          "city",
+          "country",
+          "phoneNumber",
+        ])
+      ) {
+        return sendRes(400, {
+          error: `${req.method} requests to this endpoint must contain user credentials`,
+        });
+      }
 
-      default:
-        break;
+      return await this.api.register(data);
+    } else {
+      if (!hasKeys(headers, "authorization")) {
+        return sendRes(400, {
+          error: `${req.method} requests to this endpoint must contain authorization header`,
+        });
+      }
+
+      const token = headers["autorization"].split(" ")[1]; // Assuming "Bearer TOKEN"
+      if (path === "/logout") {
+        return await this.api.logout(token);
+      }
     }
   }
 

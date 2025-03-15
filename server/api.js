@@ -1,5 +1,5 @@
 import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
-import { sendRes, hasKeys, generateToken } from "./util.js";
+import { sendRes, generateToken } from "./util.js";
 
 export class API {
   constructor(psql) {
@@ -7,12 +7,6 @@ export class API {
   }
 
   async login(data) {
-    if (!hasKeys(data, ["email", "password"])) {
-      return sendRes(400, {
-        error: `${req.method} requests to this endpoint must contain user credentials`,
-      });
-    }
-
     const user = await this.psql`
 SELECT customer_mail_address, customer_password FROM Customer WHERE customer_mail_address = ${data.email};
 `;
@@ -21,19 +15,12 @@ SELECT customer_mail_address, customer_password FROM Customer WHERE customer_mai
     }
 
     const token = generateToken();
-    // TODO: IMPLEMENT THIS
     await this
       .psql`INSERT INTO Customer_Token VALUES (user['customer_mail_address'], token)`;
-    sendRes(200, { token });
+    return sendRes(200, { token });
   }
 
   async register(data) {
-    if (!hasKeys(data, ["email", "password"])) {
-      return sendRes(400, {
-        error: `${req.method} requests to this endpoint must contain user credentials`,
-      });
-    }
-
     const r = await this.psql`
 SELECT count(customer_mail_address) FROM Customer WHERE customer_mail_address = ${data.email};
 `;
@@ -51,6 +38,17 @@ SELECT count(customer_mail_address) FROM Customer WHERE customer_mail_address = 
       return sendRes(500, {
         message: "Internal server error",
       });
+    }
+
+    return sendRes(200, { message: "OK" });
+  }
+
+  async logout(token) {
+    const r = await this
+      .psql`DELETE FROM Customer_Token WHERE customer_token = ${token}`;
+
+    if (!r.count) {
+      return sendRes(500, { error: "Internal server error" });
     }
 
     return sendRes(200, { message: "OK" });

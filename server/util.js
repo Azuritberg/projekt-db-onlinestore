@@ -60,7 +60,7 @@ export async function validateJsonReq(req) {
   }
 }
 
-export function checkKeys(obj, keys) {
+export function hasKeys(obj, keys) {
   for (const key of keys) {
     if (!obj.hasOwnProperty(key)) {
       return false;
