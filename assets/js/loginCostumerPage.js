@@ -76,58 +76,100 @@ function renderCostumerLoginPage() {
     setupEventListeners(adminButton, customerButton, loginButton, registerButton, usernameInput, passwordInput);
 }
 
-// Funktion => lägga till event listeners
+
+
+// Funktion => lägga till eventlisteners
 function setupEventListeners(adminButton, customerButton, loginButton, registerButton, usernameInput, passwordInput) {
-    let userType = "admin"; // Standardläge är "admin"
-
-
+    let userType = "customer";
     adminButton.classList.add("active");
-    // customerButton.classList.add("inactive");
 
     adminButton.addEventListener("click", function () {
         userType = "admin";
         adminButton.classList.add("active");
-        //adminButton.classList.remove("inactive");
-        //customerButton.classList.add("inactive");
         customerButton.classList.remove("active");
-
     });
 
     customerButton.addEventListener("click", function () {
         userType = "customer";
         customerButton.classList.add("active");
-        //customerButton.classList.remove("inactive");
-        //adminButton.classList.add("inactive");
         adminButton.classList.remove("active");
     });
 
-    loginButton.addEventListener("click", function () {
-        const username = usernameInput.value.trim();
+    loginButton.addEventListener("click", async function () {
+        const email = usernameInput.value.trim();
         const password = passwordInput.value.trim();
 
-        if (username === "" || password === "") {
-            alert("Vänligen fyll i både användarnamn och lösenord.");
+        if (email === "" || password === "") {
+            console.error("Please enter both email and password.");
             return;
         }
 
-        // Eventuell inloggning
-        if (userType === "admin" && username === "admin" && password === "admin123") {
-            alert("Inloggad som Admin!");
-            window.location.href = "....html"; // Omdirigerar till admin-sida
-        } else if (userType === "customer" && username === "customer" && password === "customer123") {
-            alert("Inloggad som Kund!");
-            window.location.href = ".....html"; // Omdirigerar till costumer-sida
-        } else {
-            alert("Fel användarnamn eller lösenord.");
+        try {
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email, password }) // vet inte om vi ska lägga till userType här i BODY
+            });
+
+            if (response.status === 200) {
+                const data = await response.json();
+                console.log("Login successful! Token:", data.token);
+
+                if (userType === "customer") {
+                    window.location.href = "..."; // ange rätt sida admin
+                } else {
+                    window.location.href = "..."; // ange rätt sida costumer
+                }
+
+            } else if (response.status === 401) {
+                console.error("Incorrect email or password.");
+            } else {
+                console.error("An error occurred during login. 401 Unauthorized");
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            console.error("Server error, please try again later.");
         }
     });
 
-    // Registreringsknapp?
-    registerButton.addEventListener("click", function () {
-        alert("Går till registreringssida...");
-        window.location.href = "register.html"; // Ändra till registreringssida
+    registerButton.addEventListener("click", async function () {
+        const email = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        if (email === "" || password === "") {
+            console.error("Please fill in both email and password to register.");
+            return;
+        }
+
+        try {
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, fName, lName, address, city, country,
+                    phoneNumber })  // vet inte om vi ska lägga till userType: "customer" i BODY oxå
+            });
+
+            if (response.status === 200) {
+                console.log("Registration successful! You can now log in.");
+            } else if (response.status === 400) {
+                console.error("Email already registered. 400 Bad request.");
+            } else if (response.status === 500) {
+                console.error("500 Internal server error, try again.");
+            } else {
+                console.error("Unexpected error during registration.");
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            console.error("Server error, please try again later.");
+        }
     });
 }
 
-
 renderCostumerLoginPage();
+
+
+
+
+
+
+
