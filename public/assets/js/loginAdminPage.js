@@ -7,6 +7,7 @@
 
 import { navigation } from "./navigation.js";
 
+
 export function renderAdminLoginPage() {
 
     document.body.innerHTML = "";

@@ -2,13 +2,13 @@
 
 
 import { renderAdminLoginPage } from "./loginAdminPage.js";
-import { renderCostumerLoginPage } from "./loginCostumerPage.js";
+import { renderCustomerLoginPage } from "./loginCustomerPage.js";
 import { renderAdminProductPage } from "./adminProductPage.js";
-import { renderCustomerProductPage } from "./costumerProductPage.js";
+import { renderCustomerProductPage } from "./customerProductPage.js";
 
 export const navigation = {
     adminLogin: renderAdminLoginPage,
-    customerLogin: renderCostumerLoginPage,
+    customerLogin: renderCustomerLoginPage,
     adminProducts: renderAdminProductPage,
     customerProducts: renderCustomerProductPage
 };

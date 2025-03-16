@@ -5,7 +5,7 @@ import { renderAdminLoginPage } from "./loginAdminPage.js";
 
 import {navigation} from "./navigation";
 
-export function renderCostumerLoginPage() {
+export function renderCustomerLoginPage() {
 
     document.body.innerHTML = "";
 
@@ -100,7 +100,7 @@ function setupEventListeners(adminButton, customerButton, loginButton, registerB
         userType = "customer";
         customerButton.classList.add("active");
         adminButton.classList.remove("active");
-        //renderCostumerLoginPage();
+        //renderCustomerLoginPage();
     });
 
     loginButton.addEventListener("click", async function () {
@@ -125,7 +125,7 @@ function setupEventListeners(adminButton, customerButton, loginButton, registerB
 
                 if (userType === "customer") {
                     navigation.customerProducts();
-                    //renderCostumerProductPage();
+                    //renderCustomerProductPage();
                 } else if (userType === "admin") {
                     navigation.adminProducts();
                     //renderAdminProductPage();
@@ -175,7 +175,7 @@ function setupEventListeners(adminButton, customerButton, loginButton, registerB
     });
 }
 
-renderCostumerLoginPage();
+renderCustomerLoginPage();
 
 
 
