@@ -26,22 +26,22 @@ export default class Server {
 
   async _serve(req) {
     console.log(req);
-    if (req.method === "GET") {
+    const { method, headers } = req;
+    if (method === "GET") {
       return await serveDir(req, { fsRoot: "./../public" });
     }
 
     if (!validateJsonReq(req)) {
-      return sendRes(400, { error: `${req.method} requests must be JSON.` });
+      return sendRes(400, { error: `${method} requests must be JSON.` });
     }
 
     const data = await req.json();
-    const headers = req.headers;
     const path = new URL(req.url).pathname;
 
     if (path === "/login") {
       if (!hasKeys(data, ["email", "password"])) {
         return sendRes(400, {
-          error: `${req.method} requests to this endpoint must contain user credentials`,
+          error: `${method} requests to this endpoint must contain user credentials`,
         });
       }
 
@@ -60,7 +60,7 @@ export default class Server {
         ])
       ) {
         return sendRes(400, {
-          error: `${req.method} requests to this endpoint must contain user credentials`,
+          error: `${method} requests to this endpoint must contain user credentials`,
         });
       }
 
@@ -68,13 +68,35 @@ export default class Server {
     } else {
       if (!hasKeys(headers, "authorization")) {
         return sendRes(400, {
-          error: `${req.method} requests to this endpoint must contain authorization header`,
+          error: `${method} requests to this endpoint must contain authorization header`,
         });
       }
 
       const token = headers["autorization"].split(" ")[1]; // Assuming "Bearer TOKEN"
-      if (path === "/logout") {
-        return await this.api.logout(token);
+      if (!(await this.api.validToken(token))) {
+        return sendRes(400, { error: "Invalid token" });
+      }
+
+      // TODO: Implement endpoints
+      // How do we deal with GET requests?
+      switch (path) {
+        case "/logout":
+          return await this.api.logout(token);
+
+        case "/suppliers":
+          return await this.api.suppliers(method, data);
+
+        case "/products":
+          return await this.api.products(method, data);
+
+        case "/orders":
+          return await this.api.orders(method, data);
+
+        case "/discounts":
+          return await this.api.discounts(method, data);
+
+        default:
+          return sendRes(400, { error: "Bad request" });
       }
     }
   }

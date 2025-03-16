@@ -1,6 +1,3 @@
-
-
-
 import { renderAdminLoginPage } from "./loginAdminPage.js";
 import { renderCustomerLoginPage } from "./loginCustomerPage.js";
 import { renderAdminProductPage } from "./adminProductPage.js";

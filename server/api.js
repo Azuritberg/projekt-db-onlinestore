@@ -6,6 +6,13 @@ export class API {
     this.psql = psql;
   }
 
+  async validToken(token) {
+    const r = await this
+      .psql`SELECT count(*) FROM Customer_Token WHERE customer_token = ${token}`;
+
+    return r.length ? true : false;
+  }
+
   async login(data) {
     const user = await this.psql`
 SELECT customer_mail_address, customer_password FROM Customer WHERE customer_mail_address = ${data.email};
@@ -53,4 +60,12 @@ SELECT count(customer_mail_address) FROM Customer WHERE customer_mail_address = 
 
     return sendRes(200, { message: "OK" });
   }
+
+  async suppliers(method, data) {}
+
+  async products(method, data) {}
+
+  async discounts(method, data) {}
+
+  async orders(method, data) {}
 }
