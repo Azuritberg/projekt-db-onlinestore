@@ -216,4 +216,4 @@ export function renderAdminProductPage() {
     document.body.appendChild(main);
 }
 
-renderAdminProductPage();
+//renderAdminProductPage();

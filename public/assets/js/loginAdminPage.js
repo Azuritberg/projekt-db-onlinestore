@@ -1,7 +1,8 @@
 "use strict";
 
-import { renderAdminLoginPage } from "./js/loginAdminPage.js";
-//import { renderAdminProductPage };
+
+import { renderAdminProductPage } from "./adminProductPage.js";
+import { renderCostumerLoginPage } from "./loginCostumerPage.js";
 
 
 export function renderAdminLoginPage() {
@@ -95,6 +96,7 @@ function setupEventListeners(adminButton, customerButton, loginButton, registerB
         userType = "customer";
         customerButton.classList.add("active");
         adminButton.classList.remove("active");
+        renderCostumerLoginPage();
     });
 
     loginButton.addEventListener("click", async function () {
@@ -118,9 +120,9 @@ function setupEventListeners(adminButton, customerButton, loginButton, registerB
                 console.log("Login successful! Token:", data.token);
 
                 if (userType === "admin") {
-                    renderAdminLoginPage();
-                } else {
-                    //.... sätt rätt endpoint
+                    renderAdminProductPage();
+                } else if (userType === "customer") {
+                    renderCostumerProductPage();
                 }
 
             } else if (response.status === 401) {

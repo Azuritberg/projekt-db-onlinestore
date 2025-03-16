@@ -203,4 +203,4 @@ export function renderCustomerProductPage() {
     document.body.appendChild(main);
 }
 
-renderCustomerProductPage();
+//renderCustomerProductPage();

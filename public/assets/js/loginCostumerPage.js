@@ -1,6 +1,8 @@
 "use strict";
 
-//import { renderCostumerLoginPage } from "./js/loginCostumerPage.js";
+
+import { renderCustomerProductPage } from "./customerProductPage.js";
+import { renderAdminLoginPage } from "./loginAdminPage.js";
 
 export function renderCostumerLoginPage() {
 
@@ -89,12 +91,14 @@ function setupEventListeners(adminButton, customerButton, loginButton, registerB
         userType = "admin";
         adminButton.classList.add("active");
         customerButton.classList.remove("active");
+        renderAdminLoginPage();
     });
 
     customerButton.addEventListener("click", function () {
         userType = "customer";
         customerButton.classList.add("active");
         adminButton.classList.remove("active");
+        //renderCostumerLoginPage();
     });
 
     loginButton.addEventListener("click", async function () {
@@ -110,7 +114,7 @@ function setupEventListeners(adminButton, customerButton, loginButton, registerB
             const response = await fetch('/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email, password }) // vet inte om vi ska lägga till userType här i BODY
+                body: JSON.stringify({ email, password })
             });
 
             if (response.status === 200) {
@@ -118,9 +122,9 @@ function setupEventListeners(adminButton, customerButton, loginButton, registerB
                 console.log("Login successful! Token:", data.token);
 
                 if (userType === "customer") {
-                    renderCostumerLoginPage ();
-                } else {
-                    //... sätt rätt endpoint
+                    renderCostumerProductPage();
+                } else if (userType === "admin") {
+                    renderAdminProductPage();
                 }
 
             } else if (response.status === 401) {
