@@ -1,8 +1,13 @@
 
 
-import { renderAdminLoginPage } from "./js/loginAdminPage.js";
+//import { renderAdminLoginPage } from "./loginAdminPage.js";
 
-renderAdminLoginPage();
+
+//renderAdminLoginPage();
+
+import { navigation } from "./navigation.js";
+
+navigation.adminLogin();
 
 
 

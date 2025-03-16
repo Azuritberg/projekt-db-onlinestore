@@ -1,8 +1,9 @@
 "use strict";
 
-
 import { renderCustomerProductPage } from "./customerProductPage.js";
 import { renderAdminLoginPage } from "./loginAdminPage.js";
+
+import {navigation} from "./navigation";
 
 export function renderCostumerLoginPage() {
 
@@ -91,7 +92,8 @@ function setupEventListeners(adminButton, customerButton, loginButton, registerB
         userType = "admin";
         adminButton.classList.add("active");
         customerButton.classList.remove("active");
-        renderAdminLoginPage();
+        navigation.adminLogin();
+        //renderAdminLoginPage();
     });
 
     customerButton.addEventListener("click", function () {
@@ -122,9 +124,11 @@ function setupEventListeners(adminButton, customerButton, loginButton, registerB
                 console.log("Login successful! Token:", data.token);
 
                 if (userType === "customer") {
-                    renderCostumerProductPage();
+                    navigation.customerProducts();
+                    //renderCostumerProductPage();
                 } else if (userType === "admin") {
-                    renderAdminProductPage();
+                    navigation.adminProducts();
+                    //renderAdminProductPage();
                 }
 
             } else if (response.status === 401) {
