@@ -3,7 +3,6 @@
 import { navigation } from "./navigation.js";
 
 export function renderCustomerLoginPage() {
-
   const main = document.createElement("main");
   main.id = "costumerLoginPage";
 
@@ -114,10 +113,10 @@ function setupEventListeners(
     const password = passwordInput.value.trim();
 
     customerButton.addEventListener("click", function () {
-        userType = "customer";
-        customerButton.classList.add("active");
-        adminButton.classList.remove("active");
-        //renderCustomerLoginPage();
+      userType = "customer";
+      customerButton.classList.add("active");
+      adminButton.classList.remove("active");
+      //renderCustomerLoginPage();
     });
 
     try {
@@ -148,23 +147,23 @@ function setupEventListeners(
       console.error("Server error, please try again later.");
     }
   });
-
   registerButton.addEventListener("click", async function () {
     const email = usernameInput.value.trim();
     const password = passwordInput.value.trim();
 
-    if (email === "" || password === "") {
-      console.error("Please fill in both email and password to register.");
-      return;
-    }
+    try {
+      if (email === "" || password === "") {
+        console.error("Please fill in both email and password to register.");
+        return;
+      }
 
-                if (userType === "customer") {
-                    navigation.customerProducts();
-                    //renderCustomerProductPage();
-                } else if (userType === "admin") {
-                    navigation.adminProducts();
-                    //renderAdminProductPage();
-                }
+      if (userType === "customer") {
+        navigation.customerProducts();
+        //renderCustomerProductPage();
+      } else if (userType === "admin") {
+        navigation.adminProducts();
+        //renderAdminProductPage();
+      }
 
       if (response.status === 200) {
         console.log("Registration successful! You can now log in.");
@@ -183,10 +182,3 @@ function setupEventListeners(
 }
 
 renderCustomerLoginPage();
-
-
-
-
-
-
-
