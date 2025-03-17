@@ -3,6 +3,8 @@
 import { navigation } from "./navigation.js";
 
 export function renderCustomerLoginPage() {
+  document.body.innerHTML = "";
+
   const main = document.createElement("main");
   main.id = "costumerLoginPage";
 
@@ -21,11 +23,11 @@ export function renderCustomerLoginPage() {
   topButtons.className = "top-buttons";
 
   const adminButton = document.createElement("button");
-  adminButton.className = "admin";
+  adminButton.className = "admin inactive";
   adminButton.textContent = "Admin";
 
   const customerButton = document.createElement("button");
-  customerButton.className = "costumer";
+  customerButton.className = "customer active";
   customerButton.textContent = "Customer";
 
   topButtons.appendChild(adminButton);
@@ -130,13 +132,14 @@ function setupEventListeners(
         const data = await response.json();
         console.log("Login successful! Token:", data.token);
 
+        localStorage.setItem('token', data.token); // Spara token i localStorage
+
         if (userType === "customer") {
           navigation.customerProducts();
-          //renderCostumerProductPage();
         } else if (userType === "admin") {
           navigation.adminProducts();
-          //renderAdminProductPage();
         }
+
       } else if (response.status === 401) {
         console.error("Incorrect email or password.");
       } else {

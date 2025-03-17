@@ -24,11 +24,11 @@ export function renderAdminLoginPage() {
   topButtons.className = "top-buttons";
 
   const adminButton = document.createElement("button");
-  adminButton.className = "admin";
+  adminButton.className = "admin active";
   adminButton.textContent = "Admin";
 
   const customerButton = document.createElement("button");
-  customerButton.className = "costumer";
+  customerButton.className = "customer inactive";
   customerButton.textContent = "Customer";
 
   topButtons.appendChild(adminButton);
@@ -84,7 +84,8 @@ export function renderAdminLoginPage() {
   );
 }
 
-// Funktion => lägga till eventlisteners
+
+// FUNKTION => lägga till eventlisteners
 function setupEventListeners(
   adminButton,
   customerButton,
@@ -130,12 +131,14 @@ function setupEventListeners(
         const data = await response.json();
         console.log("Login successful! Token:", data.token);
 
+        localStorage.setItem('token', data.token);
+
         if (userType === "admin") {
           navigation.adminProducts();
           //renderAdminProductPage();
         } else if (userType === "customer") {
           navigation.customerProducts();
-          //renderCostumerProductPage();
+          //renderCustomerProductPage();
         }
       } else if (response.status === 401) {
         console.error("Incorrect email or password.");

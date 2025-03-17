@@ -1,5 +1,7 @@
 "use strict";
 
+import { navigation } from "./navigation.js";
+
 export function renderCustomerProductPage() {
   document.body.innerHTML = "";
 
@@ -19,6 +21,38 @@ export function renderCustomerProductPage() {
   const logoutBtn = document.createElement("button");
   logoutBtn.className = "logout";
   logoutBtn.textContent = "Logout";
+
+
+  //LOGOUT
+  logoutBtn.addEventListener("click", async function () {
+    const token = localStorage.getItem('token'); // Hämta token från localStorage (om den sparas här)
+
+    if (!token) {
+      console.error("No token found, user is not logged in.");
+      navigation.customerLogin();
+      return;
+    }
+
+    try {
+      const response = await fetch("/logout", {
+        method: "GET",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      if (response.status === 200) {
+        console.log("Logout successful!");
+        localStorage.removeItem('token'); // Rensa token från localStorage efter logout
+        navigation.customerLogin();
+      } else {
+        console.error("Logout failed. Server status:", response.status);
+      }
+
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+  });
+  
+
 
   const cartContainer = document.createElement("div");
   cartContainer.className = "cart-item";
@@ -198,3 +232,5 @@ export function renderCustomerProductPage() {
   main.appendChild(itemContainer);
   document.body.appendChild(main);
 }
+
+
