@@ -167,6 +167,22 @@ function setupEventListeners(
         navigation.adminProducts();
         //renderAdminProductPage();
       }
+/*
+      try {
+        const response = await fetch("/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            password,
+            fName,
+            lName,
+            address,
+            city,
+            country,
+            phoneNumber,
+          }),
+        });*/
 
       if (response.status === 200) {
         console.log("Registration successful! You can now log in.");

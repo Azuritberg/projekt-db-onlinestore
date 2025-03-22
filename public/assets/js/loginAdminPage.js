@@ -34,6 +34,7 @@ export function renderAdminLoginPage() {
   topButtons.appendChild(adminButton);
   topButtons.appendChild(customerButton);
 
+  /*
   // Input fields, Bottom buttons container
   const inputField = document.createElement("div");
   inputField.className = "input-field";
@@ -63,10 +64,19 @@ export function renderAdminLoginPage() {
   registerButton.textContent = "Register";
 
   bottomButton.appendChild(loginButton);
-  bottomButton.appendChild(registerButton);
+  bottomButton.appendChild(registerButton);*/
+
+  const bottomButton = document.createElement("div");
+  bottomButton.className = "bottom-button";
+
+  const loginButton = document.createElement("button");
+  loginButton.className = "login";
+  loginButton.textContent = "Login";
+
+  bottomButton.appendChild(loginButton);
 
   loginForm.appendChild(topButtons);
-  loginForm.appendChild(inputField);
+  //loginForm.appendChild(inputField);
   loginForm.appendChild(bottomButton);
 
   main.appendChild(titleDB);
@@ -78,9 +88,9 @@ export function renderAdminLoginPage() {
     adminButton,
     customerButton,
     loginButton,
-    registerButton,
-    usernameInput,
-    passwordInput,
+    //registerButton,
+    //usernameInput,
+    //passwordInput,
   );
 }
 
@@ -90,9 +100,9 @@ function setupEventListeners(
   adminButton,
   customerButton,
   loginButton,
-  registerButton,
-  usernameInput,
-  passwordInput,
+  //registerButton,
+  //usernameInput,
+  //passwordInput,
 ) {
   let userType = "admin";
   adminButton.classList.add("active");
@@ -123,8 +133,8 @@ function setupEventListeners(
     try {
       const response = await fetch("/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({email, password}),
       });
 
       if (response.status === 200) {
@@ -150,7 +160,9 @@ function setupEventListeners(
       console.error("Server error, please try again later.");
     }
   });
+}
 
+  /*
   registerButton.addEventListener("click", async function () {
     const email = usernameInput.value.trim();
     const password = passwordInput.value.trim();
@@ -159,6 +171,7 @@ function setupEventListeners(
       console.error("Please fill in both email and password to register.");
       return;
     }
+
 
     try {
       const response = await fetch("/register", {
@@ -191,3 +204,4 @@ function setupEventListeners(
     }
   });
 }
+*/
