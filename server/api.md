@@ -1,50 +1,61 @@
-### **Admin Endpoints:**
+# API 
+## Products
+GET /products - Returns all products
+GET /products/${product_number} - Returns a specific product according to product number
+GET /products?title=${title}&supplier=${supplier} etc. - Returns products after filters
+POST (JSON) /products - Add a new product
+    ```JSON{
+        "product_number": pn,
+        "title": title,
+        "supplier": supplier,
+        "price": price
+        "qty": qty
+        "discounts": []
+    }```
 
-1. **Suppliers:**
-   - `POST /suppliers` – Add a new supplier.
-   - `GET /suppliers` – Get all suppliers.
-   - `GET /suppliers/{id}` – Get supplier details.
-   - `PUT /suppliers/{id}` – Update a supplier.
-   - `DELETE /suppliers/{id}` – Delete a supplier.
+PUT (JSON) /products/discounts/${product_number}
+    ```JSON{
+        [ {"discount_code": code, "from": date, "to": date} ]
+    }```
 
-2. **Products:**
-   - `POST /products` – Add a new product.
-   - `GET /products` – Get all products.
-   - `GET /products/{id}` – Get product details.
-   - `PUT /products/{id}` – Edit product details.
-   - `DELETE /products/{id}` – Delete a product.
+PATCH (JSON) /products/quantity/${product_number}
+    ```JSON{
+       "add"/"remove": n 
+    }```
 
-3. **Discounts:**
-   - `POST /discounts` – Add a new discount.
-   - `GET /discounts` – Get all discounts.
-   - `GET /discounts/{id}` – Get discount details.
-   - `PUT /discounts/{id}` – Edit a discount.
-   - `DELETE /discounts/{id}` – Delete a discount.
+DELETE /products/${product_number} - Deletes a product according to product number
 
-4. **Order Management:**
-   - `GET /orders` – Get all orders.
-   - `GET /orders/{id}` – Get order details.
-   - `PUT /orders/{id}/confirm` – Confirm an order.
-   - `GET /orders/monthly-top` – Get products with max orders each month.
+## Orders
+GET /orders - Returns all orders for the user (token via header)
+GET /orders/all - Returns all orders (admin)
+GET /orders/confirmed - Returns all confirmed orders (admin)
+GET /orders/unconfirmed - Returns all unconfirmed orders ("placed") (admin)
 
-### **Customer Endpoints:**
+POST (JSON) /orders - Place a new order
+    ```JSON{
+        "products": [ { "product_code", "product_supplier", "product_qty" } ]
+    }```
 
-2. **Products:**
-   - `GET /products` – Get all products.
-   - `GET /products/{id}` – Get product details.
-   - `GET /products/discounted` – Get discounted products.
-   - `GET /products/search` – Search for products by code, name, supplier, or price.
+PATCH /orders/${order_id} - Confirm order (as admin)
+DELETE /orders/${order_id} - Delete/cancel an order (as the user)
 
-3. **Orders:**
-   - `POST /orders` – Place a new order.
-   - `GET /orders/{id}` – Get order details.
-   - `GET /orders` – Get a list of customer orders.
-   - `DELETE /orders/{id}` – Delete an order (if not confirmed).
+## Discounts
+GET /discounts - Returns all discounts
+GET /discounts/${discount_code} - Get a specific discount according to code
 
-### **Stock Management:**
-   - `POST /products/{id}/update-quantity` – Update product quantity.
-   - `GET /products/{id}/quantity` – Get product quantity.
+POST (JSON) /discounts - Create a new discount
+    ```JSON{
+        "code": d_code, "amount": amount
+    }```
 
-### **Discount Management:**
-   - `GET /products/discounts` – Get discounts for products.
-   - `GET /products/discount-history/{id}` – Get discount history for a product.
+## Suppliers
+GET /suppliers - Return all suppliers
+GET /suppliers/${supplier_name} - Return supplier according to their name
+POST (JSON) /suppliers - Create a new supplier
+    ```JSON{
+        "supplier_name": name,
+        "phone": phone,
+        "address": address,
+        "city": city,
+        "country": country
+    }```

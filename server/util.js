@@ -1,3 +1,13 @@
+export function splitPath(path) {
+  let arr = path.split("/");
+
+  if (!arr[0]) {
+    return arr.splice(1);
+  } else {
+    return arr;
+  }
+}
+
 export function generateToken() {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
