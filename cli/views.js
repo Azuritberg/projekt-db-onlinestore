@@ -265,14 +265,10 @@ export const views = {
     console.log("Current page: ", page + 1);
     console.log("Type [n]ext/[p]rev to change page");
     if (session.isAdmin()) {
+      console.log("Type 'discount' followed by the index to add a discount");
+      console.log("Type 'delete' followed by the index to delete a product");
       console.log(
-        "Type 'discount' followed by the product code to add a discount",
-      );
-      console.log(
-        "Type 'delete' followed by the product code to delete a product",
-      );
-      console.log(
-        "Type 'qty' followed by the product code to change the quantity of a product",
+        "Type 'qty' followed by the index to change the quantity of a product",
       );
     }
 
@@ -322,6 +318,7 @@ export const views = {
     } else if (ch === "n" || ch === "next") {
       setView("viewProducts", { filters, page: page + 1 });
     } else if (ch === "p" || ch === "prev") {
+      setView("viewProducts", { filters, page: page - 1 < 0 ? 0 : page - 1 });
     }
 
     ch = ch.split(" ");
@@ -350,33 +347,53 @@ export const views = {
       }
     }
   },
-  applyDiscount: async (_, setView, productCode) => {
+  applyDiscount: async (_, setView, idx) => {
     console.log("=== APPLY DISCOUNT ===");
-    console.log("Current product:", productCode);
-    console.log(
-      "Separated by colons (:), Input the name, start date and end date of the discount you want to apply to product ${PRODUCT_NAME}",
-    );
-    console.log("Date must be formatted like YYYYMMDD");
-    console.log("Example: XMAS:20251201:20251231");
-    console.log("Type 0 to go back");
-    console.log("\n${DISCOUNT_LIST}");
+    const res =
+      await sql`SELECT * from supplier_product sp JOIN product p ON sp.product_code = p.product_code WHERE id = ${idx}`;
+    if (res.length) {
+      console.log(
+        `Selected product: [${res[0].product_code}] ${res[0].product_name} - ${res[0].supplier_name}`,
+      );
+      console.log(
+        "Separated by colons (:), Input the name, start date and end date of the discount you want to apply to product ${PRODUCT_NAME}",
+      );
+      console.log("Date must be formatted like YYYYMMDD");
+      console.log("Example: XMAS:20251201:20251231");
+      console.log("Type 0 to go back");
+      console.log("\n[Discount name - discount amount]");
+      const d = await sql`SELECT * FROM discount;`;
+      for (const { discount_code, discount_amount } of d) {
+        console.log(`${discount_code} - ${discount_amount}%`);
+      }
+    } else {
+      console.log("Could not find product with index", idx);
+    }
     let ch = await input();
 
     if (ch === "0") {
       setView("viewProducts");
     }
 
-    ch = ch.split(":");
-    if (ch.length === 3) {
-      const start = ch[1];
-    } else if (ch === "0") {
-      setView("");
+    if (res.length) {
+      ch = ch.split(":");
+      if (ch.length === 3) {
+      }
     }
   },
-  deleteProduct: async (_, setView, productCode) => {
+  deleteProduct: async (_, setView, idx) => {
     console.log("=== DELETE PRODUCT ===");
-    console.log("Current product:", productCode);
-    console.log("[y]es/[n]o?");
+    const res =
+      await sql`SELECT * from supplier_product sp JOIN product p ON sp.product_code = p.product_code WHERE id = ${idx}`;
+    if (res.length) {
+      console.log(
+        `Selected product: [${res[0].product_code}] ${res[0].product_name} - ${res[0].supplier_name}`,
+      );
+      console.log("Delete it?");
+      console.log("[y]es/[n]o?");
+    } else {
+      console.log("Could not find product with index", idx);
+    }
     console.log("Type 0 to go back");
     const ch = await input();
     if (ch === "0") {
@@ -387,19 +404,32 @@ export const views = {
       console.log("Not implemented");
     }
   },
-  qtyProduct: async (_, setView, productCode) => {
+  qtyProduct: async (_, setView, idx) => {
     console.log("=== CHANGE QUANTITY ===");
-    console.log("Current product:", productCode);
-    console.log("Current quantity: ${QUANTITY}");
+    const res =
+      await sql`SELECT * from supplier_product sp JOIN product p ON sp.product_code = p.product_code WHERE id = ${idx}`;
+    if (res.length) {
+      console.log(
+        `Selected product: [${res[0].product_code}] ${res[0].product_name} - ${res[0].supplier_name}`,
+      );
+      console.log(`Current quantity: ${res[0].product_quantity}`);
+    } else {
+      console.log("Could not find product with index", idx);
+    }
     console.log(
       "Input the amount to change (can be a positive or negative integer):",
     );
+    console.log("Example: -5");
     console.log("Type 0 to go back");
-    const ch = await input();
+    let ch = await input();
     if (ch === "0") {
       setView("viewProducts");
-    } else {
-      console.log("Not implemented");
+    } else if (ch[0] === "+" || (ch[0] === "-" && ch.length >= 2)) {
+      const res =
+        await sql`SELECT update_supplier_product_quantity(${idx}, ${ch}) AS message`;
+      console.log(res[0].message);
+      console.log("Press any key to continue");
+      await input();
     }
   },
   manageDiscounts: async (_, setView) => {
@@ -474,7 +504,7 @@ export const views = {
         const endDate = formatDate(e.discount_date_end);
         const price = e.product_price / 100;
         console.log(
-          `[${e.product_code}] ${e.product_name} - ${(price * (1 - discount_amount / 100)).toFixed(2)} (${e.discount_amount}% off) (${startDate} - ${endDate})`,
+          `[${e.product_code}] ${e.product_name} - ${(price * (1 - e.discount_amount / 100)).toFixed(2)} (${e.discount_amount}% off) (${startDate} - ${endDate})`,
         );
       }
     } else {
