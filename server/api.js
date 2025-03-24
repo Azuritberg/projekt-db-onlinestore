@@ -1,5 +1,5 @@
 import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
-import { sendRes, generateToken } from "./util.js";
+import { sendRes, generateToken, splitPath } from "./util.js";
 
 export class API {
   constructor(psql) {
@@ -61,11 +61,58 @@ SELECT count(customer_mail_address) FROM Customer WHERE customer_mail_address = 
     return sendRes(200, { message: "OK" });
   }
 
-  async suppliers(method, data) {}
+  async get(path) {
+    const _path = splitPath(path);
+    const endpoint = _path[0];
+    const len = _path.length;
+    const parametersExist = endpoint.indexOf("?") === -1 ? false : true;
 
-  async products(method, data) {}
+    switch (endpoint) {
+      case "products":
+        if (len > 1 && _path[1]) {
+          const pNum = _path[1];
+          // Return product according to product number
+        }
 
-  async discounts(method, data) {}
+        if (len === 1) {
+          if (parametersExist) {
+            // Return filtered search results
+          }
+          // Return all products
+        }
 
-  async orders(method, data) {}
+      case "orders":
+        if (len > 1) {
+          const action = _path[1];
+          if (action === "all") {
+            // Return all orders
+          }
+
+          if (action === "unconfirmed") {
+            // Return unconfirmed orders
+          }
+
+          if (action === "confirmed") {
+          }
+        }
+    }
+  }
+
+  async post(path, data) {
+    const _path = splitPath(path);
+    const endpoint = _path[0];
+    const len = _path.length;
+  }
+
+  async patch(path, data) {
+    const _path = splitPath(path);
+  }
+
+  async put(path, data) {
+    const _path = splitPath(path);
+  }
+
+  async delete(path, data) {
+    const _path = splitPath(path);
+  }
 }

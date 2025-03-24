@@ -27,7 +27,9 @@ export default class Server {
   async _serve(req) {
     console.log(req);
     const { method, headers } = req;
-    if (method === "GET") {
+    const path = new URL(req.url).pathname;
+
+    if (method === "GET" && path === "/") {
       return await serveDir(req, { fsRoot: "./../public" });
     }
 
@@ -36,9 +38,8 @@ export default class Server {
     }
 
     const data = await req.json();
-    const path = new URL(req.url).pathname;
 
-    if (path === "/login") {
+    if (method === "POST" && path === "/login") {
       if (!hasKeys(data, ["email", "password"])) {
         return sendRes(400, {
           error: `${method} requests to this endpoint must contain user credentials`,
@@ -46,7 +47,7 @@ export default class Server {
       }
 
       return await this.api.login(data);
-    } else if (path === "/register") {
+    } else if (method === "POST" && path === "/register") {
       if (
         !hasKeys(data, [
           "email",
@@ -72,31 +73,30 @@ export default class Server {
         });
       }
 
+      // All requests following has to be made with authorisation by token header
+      // Server assumes you're logged in at this point
       const token = headers["autorization"].split(" ")[1]; // Assuming "Bearer TOKEN"
       if (!(await this.api.validToken(token))) {
         return sendRes(400, { error: "Invalid token" });
       }
 
-      // TODO: Implement endpoints
-      // How do we deal with GET requests?
-      switch (path) {
-        case "/logout":
-          return await this.api.logout(token);
+      if (path === "/logout") {
+        return await this.api.logout(token);
+      }
 
-        case "/suppliers":
-          return await this.api.suppliers(method, data);
-
-        case "/products":
-          return await this.api.products(method, data);
-
-        case "/orders":
-          return await this.api.orders(method, data);
-
-        case "/discounts":
-          return await this.api.discounts(method, data);
-
+      switch (method) {
+        case "GET":
+          return await this.api.get(path);
+        case "POST":
+          return await this.api.post(path);
+        case "PATCH":
+          return await this.api.patch(path);
+        case "PUT":
+          return await this.api.put(path);
+        case "DELETE":
+          return await this.api.delete(path);
         default:
-          return sendRes(400, { error: "Bad request" });
+          break;
       }
     }
   }
