@@ -1,14 +1,13 @@
-import { input } from "./utils.js";
+import { input, print } from "./utils.js";
 import { sql } from "./main.js";
 import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
 
 export const views = {
   start: async (session, setView) => {
-    console.log("=== ONLINE STORE CLI ===");
-    console.log("Are you an admin or a customer?");
-    console.log("1. Admin");
-    console.log("2. Customer");
-    console.log("0. Exit program");
+    print("Select an option by typing its number and pressing Enter", "info");
+    print("1 Admin");
+    print("2 Customer");
+    print("0 Quit");
     const ch = await input();
     if (ch === "1") {
       session.grantAdmin();
@@ -21,11 +20,11 @@ export const views = {
     }
   },
   customerStart: async (_, setView) => {
-    console.log("=== CUSTOMER ===");
-    console.log("Do you want to log in or register?");
-    console.log("1. Log in");
-    console.log("2. Register");
-    console.log("0. Go back");
+    print("Customer Portal", "h2");
+    print("1 Log in");
+    print("2 Register");
+    print("0 Go back");
+
     const ch = await input();
     if (ch === "1") {
       setView("customerLogin");
@@ -36,106 +35,110 @@ export const views = {
     }
   },
   customerLogin: async (session, setView) => {
-    console.log("=== CUSTOMER LOGIN ===");
-    console.log("Input your email and password separated by a semicolon (:)");
-    console.log("Example: email:password");
-    console.log("Type 0 to cancel the log in");
+    print("Customer Log in", "h2");
+    print("Input your email and password separated by a semicolon", "info");
+    print("Example: name@mail.com:password", "info");
+    print("0 Cancel");
 
-    const ch = await input();
+    let ch = await input();
     if (ch === "0") {
-      setView("customer");
-      return;
-    }
+      setView("customerStart");
+    } else {
+      if (!ch.includes(":")) {
+        print(
+          "Invalid input. Make sure your input follows the expected format",
+          "error",
+        );
+        await input();
+        return;
+      }
 
-    if (!ch.includes(":")) {
-      console.log("Invalid format. Try again.");
-      await input();
-      return;
-    }
+      ch = ch.split(":");
+      if (ch.length < 2) {
+        console.log(ch.length);
+        print(
+          "Invalid input. Make sure your input follows the expected format",
+          "error",
+        );
+        await input();
+        return;
+      }
 
-    const credentials = ch.split(":");
-    if (!credentials[0] || !credentials[1]) {
-      console.log("Invalid input. Try again.");
-      return;
-    }
-
-    const res = await sql`
-    SELECT customer_mail_address, customer_password FROM Customer WHERE customer_mail_address = ${credentials[0]};
+      const res = await sql`
+    SELECT customer_mail_address, customer_password FROM Customer WHERE customer_mail_address = ${ch[0]};
   `;
+      if (!res.length) {
+        print("Wrong username or password\nPress enter to try again", "error");
+        await input();
+        return;
+      }
 
-    if (!res.length) {
-      console.log("Wrong username/password");
-      console.log("Press enter to try again");
-      await input();
-      return;
+      const user = res[0];
+      if (!(await bcrypt.compare(ch[1], user["customer_password"]))) {
+        print("Wrong username or password\nPress enter to try again", "error");
+        await input();
+        return;
+      }
+
+      session.user = user["customer_mail_address"];
+      session.revokeAdmin();
+      setView("main");
     }
-
-    const user = res[0];
-    if (!(await bcrypt.compare(credentials[1], user["customer_password"]))) {
-      console.log("Wrong username/password");
-      console.log("Press enter to try again");
-      await input();
-      return;
-    }
-
-    session.user = user["customer_mail_address"];
-    session.revokeAdmin();
-    setView("main");
   },
   customerRegister: async (_, setView) => {
-    console.log("=== CUSTOMER REGISTER ===");
-    console.log("Type 0 at any time to cancel the registration process");
+    print("Customer Register", "h2");
+    print("0 Cancel");
 
-    console.log("Input your email:");
+    print("Enter your email:", "interactive");
     const email = await input();
     if (email === "0") {
       setView("customerStart");
       return;
     }
 
-    console.log("Input your password:");
+    print("Enter your password:", "interactive");
     const password = await input();
     if (password === "0") {
       setView("customerStart");
       return;
     }
 
-    console.log("Input your first name:");
+    print("Enter your first name:", "interactive");
     const fName = await input();
     if (fName === "0") {
       setView("customerStart");
       return;
     }
 
-    console.log("Input your last name:");
+    print("Enter your last name:", "interactive");
     const lName = await input();
     if (lName === "0") {
       setView("customerStart");
       return;
     }
 
-    console.log("Input your address:");
+    print("Enter your address:", "interactive");
     const address = await input();
     if (address === "0") {
       setView("customerStart");
       return;
     }
 
-    console.log("Input your city:");
+    print("Enter your city:", "interactive");
     const city = await input();
     if (city === "0") {
       setView("customerStart");
       return;
     }
 
-    console.log("Input your country:");
+    print("Enter your country:", "interactive");
     const country = await input();
     if (country === "0") {
       setView("customerStart");
       return;
     }
 
-    console.log("Input your phone:");
+    print("Enter your phone:", "interactive");
     const phone = await input();
     if (phone === "0") {
       setView("customerStart");
@@ -164,26 +167,31 @@ export const views = {
         ${nc.phone}
     ) AS message;`;
 
-    console.log(msg[0].message);
-    console.log("Press enter to confirm");
+    print(msg[0].message, "msg");
     await input();
-    setView("customerLogin");
+    setView("customerStart");
   },
   main: async (session, setView) => {
-    console.log(
-      "Logged in as: " + (session.isAdmin() ? "Admin" : session.user),
+    print("Main menu", "h2");
+    print(
+      "Logged in as: " +
+        (session.isAdmin() ? "Admin" : (session.user ?? "unknown")),
+      "msg",
     );
+
     if (!session.isAdmin()) {
-      console.log("To view your cart, type 'cart'");
-      console.log("To view your orders, type 'orders'");
+      print("cart View your cart");
+      print("orders View your orders");
     }
-    console.log("1. View products");
+    print("sale View products currently on sale");
+    print("1 View products");
     if (session.isAdmin()) {
-      console.log("2. Manage Discounts");
-      console.log("3. Manage Suppliers");
-      console.log("4. Confirm Orders");
+      print("2 Manage discounts");
+      print("3 Manage suppliers");
+      print("4 Confirm orders");
     }
-    console.log("0. Exit");
+
+    print("0 Go back");
     const ch = await input();
     if (ch === "cart" && !session.isAdmin()) {
       setView("cart");
@@ -200,87 +208,186 @@ export const views = {
     } else if (ch === "0") {
       session.logOut();
       setView("start");
+    } else if (ch === "sale") {
+      setView("viewSales");
+    } else {
+      print(
+        "Invalid input. Make sure your input follows the expected format",
+        "error",
+      );
     }
   },
   cart: async (session, setView) => {
-    console.log("=== CART ===");
-    console.log(
-      "To increase/decrease the quantity of a product in your cart, type its index followed by a + or - and the amount",
+    print("Cart", "h2");
+    print(
+      "To change the quantity of a product in your cart, type its index followed by the amount you want to change",
+      "info",
     );
-    console.log(
-      "Example: 2 + 4 would increase the product quantity of the second product by four",
-    );
-    console.log("To remove a product, type delete followed by its index");
-    console.log("To place your order, type place");
-    console.log("Example: delete 2");
-    console.log("Type 0 to go back");
+    print("Example: 2+4", "info");
+    print("To remove a product, type 'delete' followed by its index", "info");
+    print("To place your order, type 'place'", "info");
+    print("0 Go back");
 
-    const res =
-      await sql`select p.product_name, cart.product_supplier_name, cart.product_quantity, sp.product_price, (sp.product_price * cart.product_quantity) as price, sp.id as idx from get_or_create_cart(${session.user}) as cart JOIN supplier_product sp ON cart.product_code = sp.product_code AND cart.product_supplier_name = sp.supplier_name JOIN product p ON p.product_code = sp.product_code;`;
+    const res = await sql`
+  SELECT p.product_name,
+         cart.product_supplier_name,
+         cart.product_quantity,
+         sp.product_price,
+         (sp.product_price * cart.product_quantity) AS price,
+         sp.id AS idx,
+         COALESCE(MAX(d.discount_amount), 0) AS discount,  -- Highest discount percentage
+         COUNT(d.discount_code) AS discount_count  -- Number of active discounts
+  FROM get_or_create_cart(${session.user}) AS cart
+  JOIN supplier_product sp 
+    ON cart.product_code = sp.product_code 
+    AND cart.product_supplier_name = sp.supplier_name 
+  JOIN product p 
+    ON p.product_code = sp.product_code
+  LEFT JOIN product_discount pd 
+    ON sp.product_code = pd.product_code 
+    AND pd.discount_date_start <= NOW() 
+    AND pd.discount_date_end >= NOW()
+  LEFT JOIN discount d 
+    ON pd.discount_code = d.discount_code
+  GROUP BY sp.id, sp.supplier_name, sp.product_code, sp.product_price, sp.product_quantity, p.product_name, cart.product_quantity, cart.product_supplier_name
+  ORDER BY sp.id`;
+
     if (!res.length || !res[0].product_name) {
-      console.log("No products found in cart");
+      console.log("Cart is empty");
     } else {
+      print(
+        "Index | Supplier | Product | Qty | Price | Discount | Final Price",
+        "msg",
+      );
       for (const product of res) {
+        const discountNotice =
+          product.discount_count > 0
+            ? `(${product.discount_count} discounts applied)`
+            : "";
+        const finalPrice = product.price * (1 - product.discount / 100); // Apply discount
+
         console.log(
-          `${product.idx}. [${product.product_supplier_name}] ${product.product_name} (${product.product_quantity} pcs) - ${product.price / 100}$ total`,
+          `${product.idx} | ${product.product_supplier_name} | ${product.product_name} | ${product.product_quantity}pcs | ${(product.price / 100).toFixed(2)}$ | ${product.discount}% ${discountNotice} | ${(finalPrice / 100).toFixed(2)}$`,
         );
       }
     }
+    //  const res = await sql`select p.product_name,
+    //    cart.product_supplier_name,
+    //    cart.product_quantity,
+    //    sp.product_price,
+    //    (sp.product_price * cart.product_quantity) as price,
+    //    sp.id as idx from get_or_create_cart(${session.user}) as cart
+    //    JOIN supplier_product sp
+    //    ON cart.product_code = sp.product_code
+    //    AND cart.product_supplier_name = sp.supplier_name
+    //    JOIN product p
+    //    ON p.product_code = sp.product_code;
+    //`;
+    //  //
+    //  // TODO: APPLY DISCOUNTS
+    //  //
+    //  if (!res.length || !res[0].product_name) {
+    //    console.log("Cart is empty");
+    //  } else {
+    //    print("Index | Supplier | Product | Qty | Price", "msg");
+    //    for (const product of res) {
+    //      console.log(
+    //        `${product.idx} | ${product.product_supplier_name} | ${product.product_name} | ${product.product_quantity}pcs | ${product.price / 100}$`,
+    //      );
+    //    }
+    //  }
 
     let ch = await input();
     if (ch === "0") {
       setView("main");
     } else if (ch === "place") {
-      if (res.length) {
+      if (res.length && res[0].product_name) {
         const msg = await sql`UPDATE customer_order
-SET order_state = 'placed'
-WHERE order_state = 'shopping'
-  AND customer_mail_address = ${session.user}`;
+          SET order_state = 'placed'
+          WHERE order_state = 'shopping'
+          AND customer_mail_address = ${session.user}
+        `;
+        if (msg.count) {
+          print("Your order has been successfully placed", "msg");
+          await input();
+        } else {
+          print("Could not place your order", "error");
+          await input();
+        }
       } else {
-        console.log("You need to add at least one item to place an order");
+        print("Cannot place order with empty cart", "error");
         await input();
       }
     } else {
-      ch = ch.split(" ");
-      if (ch[0] === "delete" && ch[1]) {
-        const idx = ch[1];
-        const msg =
-          await sql`SELECT remove_product_from_cart(${session.user}, ${idx}) AS message`;
-        console.log(msg[0].message);
-        await input();
-      } else if (ch.indexOf("+") !== -1 && ch[0] !== "+" && ch[2]) {
-        const idx = ch[0];
-        const amount = ch[2];
-        const msg =
-          await sql`SELECT modify_cart_quantity(${session.user}, ${idx}, ${amount}) AS message`;
-        console.log(msg[0].message);
-        await input();
-      } else if (ch.indexOf("-") !== -1 && ch[0] !== "-" && ch[2]) {
-        const idx = ch[0];
-        const amount = -ch[2];
-        const msg =
-          await sql`SELECT modify_cart_quantity(${session.user}, ${idx}, ${amount}) AS message`;
-        console.log(msg[0].message);
-        await input();
+      // TODO: CHECK INDEXOF + OR - HERE INSTEAD
+      if (ch.indexOf("+") !== -1) {
+        ch = ch.split("+");
+        if (ch[0] && ch[1]) {
+          const idx = ch[0];
+          const amount = ch[1];
+          const msg =
+            await sql`SELECT modify_cart_quantity(${session.user}, ${idx}, ${amount}) AS message`;
+          print(msg[0].message, "msg");
+          await input();
+        } else {
+          print(
+            "Invalid input. Make sure your input follows the expected format",
+            "error",
+          );
+          await input();
+        }
+      } else if (ch.indexOf("-") !== -1) {
+        ch = ch.split("-");
+        if (ch[0] && ch[1]) {
+          const idx = ch[0];
+          const amount = -ch[1];
+          const msg =
+            await sql`SELECT modify_cart_quantity(${session.user}, ${idx}, ${amount}) AS message`;
+          print(msg[0].message, "msg");
+          await input();
+        } else {
+          print(
+            "Invalid input. Make sure your input follows the expected format",
+            "error",
+          );
+          await input();
+        }
+      } else {
+        ch = ch.split(" ");
+        if (ch[0] === "delete" && ch[1]) {
+          const idx = ch[1];
+          const msg =
+            await sql`SELECT remove_product_from_cart(${session.user}, ${idx}) AS message`;
+          print(msg[0].message, "msg");
+          await input();
+        } else {
+          print(
+            "Invalid input. Make sure your input follows the expected format",
+            "error",
+          );
+          await input();
+        }
       }
     }
   },
   orders: async (session, setView) => {
-    console.log("=== ORDERS ===");
-    console.log("To view a order, type view followed by the order id");
-    console.log(
-      "To cancel a placed order (that hasn't yet been confirmed), type cancel followed by the order id",
+    print("Orders", "h2");
+    print("To view an order, type 'view' followed by the order id", "info");
+    print(
+      "To cancel an unconfirmed order, type 'cancel' followed by the order id",
+      "info",
     );
-    console.log("Type 0 to go back");
+    print("0 Go back");
     const res = await sql`
       SELECT * FROM Customer_Order WHERE customer_mail_address = ${session.user};
 `;
     if (!res.length) {
       console.log("No orders found");
     } else {
+      print("Order state | Order ID | Order date", "msg");
       for (const order of res) {
         console.log(
-          `[${order.order_state}] ID: ${order.order_id} (created on ${order.order_date})`,
+          `${order.order_state} | ${order.order_id} | ${order.order_date}`,
         );
       }
     }
@@ -292,29 +399,50 @@ WHERE order_state = 'shopping'
       ch = ch.split(" ");
       if (ch[0] === "view" && ch[1]) {
         setView("viewOrder", ch[1]);
-      }
-
-      if (ch[0] === "cancel" && ch[1]) {
+      } else if (ch[0] === "cancel" && ch[1]) {
         const msg = await sql`SELECT cancel_order(${ch[1]}) as message`;
         console.log(msg[0].message);
         await input();
+      } else {
+        print(
+          "Invalid input. Make sure your input follows the expected format",
+          "error",
+        );
       }
     }
   },
   viewOrder: async (_, setView, id) => {
-    console.log(`Viewing order: ${id}`);
     const res =
       await sql`SELECT p.product_name, si.product_supplier_name, si.product_quantity, co.order_date, co.order_state FROM customer_order co JOIN customer_product_shopping_item si ON co.order_id = si.order_id JOIN product p ON si.product_code = p.product_code WHERE co.order_id = ${id}`;
-    console.log(`Order state: ${res[0].order_state}`);
-    console.log(`Order placed ${res[0].order_date}`);
-
+    if (res.length) {
+    } else {
+      print("Could not find order", "error");
+    }
+    print(`Viewing order: ${id}`, "msg");
+    print(`Order state: ${res[0].order_state}`, "msg");
+    print(`Order placed ${res[0].order_date}`, "msg");
+    print("0 Go back");
+    //
+    // TODO: ADD PRICE
+    //
+    print("Supplier | Product | Qty | Price");
     for (const product of res) {
       console.log(
-        `${product.product_name} - ${product.product_supplier_name} (${product.product_quantity} qty)`,
+        `${product.product_supplier_name} | ${product.product_name} | ${product.product_quantity}pcs | PRICE`,
+      );
+    }
+
+    const ch = await input();
+    if (ch === 0) {
+      setView("orders");
+    } else {
+      print(
+        "Invalid input. Make sure your input follows the expected format",
+        "error",
       );
     }
   },
-  viewProducts: async (session, setView, data) => {
+  viewSales: async (session, setView, data) => {
     let filters = [];
     let page = 0;
 
@@ -326,37 +454,54 @@ WHERE order_state = 'shopping'
       page = data.page;
     }
 
-    console.log("=== PRODUCTS ===");
-    console.log("Current page: ", page + 1);
-    console.log("Type [n]ext/[p]rev to change page");
+    print("Products", "h2");
+    print(`Current page: ${page + 1}`, "msg");
+    print("[n]ext Next page");
+    print("[p]rev Previous page");
+    print("0 Go back");
 
     if (session.isAdmin()) {
-      console.log("Type 'discount' followed by the index to add a discount");
-      console.log("Type 'delete' followed by the index to delete a product");
-      console.log(
-        "Type 'qty' followed by the index to change the quantity of a product",
+      print(
+        "To create a new product, type 'create' followed by its name separated by a colon",
+        "info",
+      );
+      print("Example: create memory module", "info");
+      print(
+        "To add a discount to a product, type 'discount' followed by the products index",
+        "info",
+      );
+      print(
+        "To delete a product, type 'delete' followed by the products index",
+        "info",
+      );
+      print(
+        "To change the quantity of a product, type 'qty' followed by the products index",
+        "info",
       );
     } else {
-      console.log(
-        "Type 'add' followed by the index and a quantity separated by a colon to add a product to your cart",
+      print(
+        "To add a product to your cart, type 'add' followed by the products index and the quantity you want to add separated by a colon",
+        "info",
       );
-      console.log("Example: add 23:2");
+      print("Example: add 23:2", "info");
     }
 
-    console.log(
-      "\nTo filter for products, type 'search' followed by filters separated by commas.",
+    print(
+      "To filter for products, type 'search' followed by the filters separated by comma",
+      "info",
     );
-    console.log("Available filters: code, name, supplier, minprice, maxprice");
-    console.log("Example: search name:harddrive,minprice:12.00");
+    print("Example: search name:harddrive,minprice:12.00", "info");
+    print(
+      "Available filters: code, name, supplier, minprice, maxprice",
+      "info",
+    );
 
     if (filters.length > 0) {
-      console.log("[ACTIVE FILTERS]");
+      print("Currently applied filters:", "interactive");
       for (const { name, value } of filters) {
         console.log(`${name}: ${value}`);
       }
     }
-
-    console.log("Type 0 to go back");
 
     // Build dynamic filtering conditions
     let whereClauses = sql``;
@@ -366,7 +511,7 @@ WHERE order_state = 'shopping'
         const filterClause = sql`
         ${
           filter.name === "code"
-            ? sql`sp.product_code ILIKE ${"%" + filter.value + "%"}`
+            ? sql`sp.product_code::TEXT ILIKE ${"%" + filter.value + "%"}`
             : filter.name === "name"
               ? sql`p.product_name ILIKE ${"%" + filter.value + "%"}`
               : filter.name === "supplier"
@@ -379,7 +524,6 @@ WHERE order_state = 'shopping'
         }
       `;
 
-        // For the first filter, no `AND` is needed
         if (index > 0) {
           whereClauses = sql`${whereClauses} AND ${filterClause}`;
         } else {
@@ -388,28 +532,51 @@ WHERE order_state = 'shopping'
       });
     }
 
-    // Fetch products with filters and pagination
     const res = await sql`
-    SELECT sp.id as idx,
-           sp.supplier_name as supplier,
-           sp.product_code as code,
-           sp.product_price as price,
-           sp.product_quantity as quantity,
-           p.product_name as name
-    FROM supplier_product sp
-    JOIN product p ON sp.product_code = p.product_code
-    ${whereClauses}
-    ORDER BY sp.id
-    LIMIT 20 OFFSET ${20 * page}
-  `;
+  SELECT sp.id as idx,
+         sp.supplier_name as supplier,
+         sp.product_code as code,
+         sp.product_price as price,  -- Original price in cents
+         sp.product_quantity as quantity,
+         p.product_name as name,
+         COALESCE(MAX(d.discount_amount), 0) AS discount,  -- Highest discount percentage
+         COUNT(d.discount_code) AS discount_count  -- Number of active discounts
+  FROM supplier_product sp
+  JOIN product p ON sp.product_code = p.product_code
+  LEFT JOIN product_discount pd ON sp.product_code = pd.product_code 
+    AND pd.discount_date_start <= NOW() 
+    AND pd.discount_date_end >= NOW()
+  LEFT JOIN discount d ON pd.discount_code = d.discount_code
+  ${whereClauses}
+  GROUP BY sp.id, sp.supplier_name, sp.product_code, sp.product_price, sp.product_quantity, p.product_name
+  HAVING COUNT(d.discount_code) > 0  -- Only include products with active discounts
+  ORDER BY sp.id
+  LIMIT 20 OFFSET ${20 * page}
+`;
 
-    // Display results
-    for (const { idx, supplier, code, price, quantity, name } of res) {
+    print(
+      "Index | Code | Supplier | Name | Stock | Price | Discount | Final Price",
+      "msg",
+    );
+
+    for (const {
+      idx,
+      supplier,
+      code,
+      price,
+      quantity,
+      name,
+      discount,
+      discount_count,
+    } of res) {
+      const discountNotice =
+        discount_count > 0 ? `(${discount_count} discounts applied)` : "";
+      const finalPrice = price * (1 - discount / 100); // Apply percentage discount
+
       console.log(
-        `${idx}. ${name} - ${supplier} ${price / 100}$ (${quantity} in stock)`,
+        `${idx} | ${code} | ${supplier} | ${name} | ${quantity}pcs | ${(price / 100).toFixed(2)}$ | ${discount}% ${discountNotice} | ${(finalPrice / 100).toFixed(2)}$`,
       );
     }
-
     // Handle user input
     let ch = await input();
     if (ch === "0") {
@@ -441,140 +608,251 @@ WHERE order_state = 'shopping'
         setView("deleteProduct", ch[1]);
       } else if (ch[0] === "qty" && ch[1]) {
         setView("qtyProduct", ch[1]);
+      } else if (ch[0] === "create" && ch[1]) {
+        const pName = ch.slice(1).join(" ");
+        const msg =
+          await sql`INSERT INTO product (product_name) VALUES (${pName})`;
+        if (msg.count) {
+          print("Product created", "msg");
+          await input();
+        } else {
+          print("Could not create product", "error");
+          await input();
+        }
       }
     } else if (!session.isAdmin()) {
       if (ch[0] === "add" && ch[1]) {
         const [idx, qty] = ch[1].split(":");
         const msg =
           await sql`SELECT add_product_to_cart(${session.user}, ${idx}, ${qty}) AS message`;
-        console.log(msg[0].message);
+        print(msg[0].message, "msg");
         await input();
+        return;
       }
     }
-  },
 
-  //viewProducts: async (session, setView, data) => {
-  //  let filters = [];
-  //  let page = 0;
-  //
-  //  if (data && data.filters) {
-  //    filters = data.filters;
-  //  }
-  //
-  //  if (data && data.page) {
-  //    page = data.page;
-  //  }
-  //
-  //  console.log("=== PRODUCTS ===");
-  //  console.log("Current page: ", page + 1);
-  //  console.log("Type [n]ext/[p]rev to change page");
-  //  if (session.isAdmin()) {
-  //    console.log("Type 'discount' followed by the index to add a discount");
-  //    console.log("Type 'delete' followed by the index to delete a product");
-  //    console.log(
-  //      "Type 'qty' followed by the index to change the quantity of a product",
-  //    );
-  //  }
-  //
-  //  if (!session.isAdmin()) {
-  //    console.log(
-  //      "Type 'add' followed by the index (first number) and a quantity to add a product to your cart. Index and quantity should be separated with a semicolon (:)",
-  //    );
-  //    console.log("Example: add 23:2");
-  //  }
-  //
-  //  console.log(
-  //    "\nTo filter for products, type 'search' followed by the filter type and its value separated with a colon (:)",
-  //  );
-  //  console.log("Filters are separated by a comma");
-  //  console.log("Do not use any spaces in your filter list");
-  //  console.log("Available filters: code, name, supplier, minprice, maxprice");
-  //  console.log("Example: name:harddrive,minprice:12.00");
-  //  if (filters && filters.length > 0) {
-  //    console.log("[ACTIVE FILTERS]");
-  //    for (const { name, value } of filters) {
-  //      console.log(`${name}: ${value}`);
-  //    }
-  //  }
-  //  console.log("Type 0 to go back");
-  //
-  //  const res = await sql`
-  //    SELECT sp.id as idx,
-  //    sp.supplier_name as supplier,
-  //    sp.product_code as code,
-  //    sp.product_price as price,
-  //    sp.product_quantity as quantity,
-  //    p.product_name as name
-  //    FROM supplier_product sp JOIN product p ON sp.product_code = p.product_code
-  //    ORDER BY sp.id
-  //    LIMIT 20
-  //    OFFSET ${20 * page};
-  //  `;
-  //
-  //  for (const { idx, supplier, code, price, quantity, name } of res) {
-  //    console.log(
-  //      `${idx}. [${code}] ${name} - ${supplier} ${price / 100}$ (${quantity} in stock)`,
-  //    );
-  //  }
-  //  let ch = await input();
-  //  if (ch === "0") {
-  //    setView("main");
-  //  } else if (ch === "n" || ch === "next") {
-  //    setView("viewProducts", { filters, page: page + 1 });
-  //  } else if (ch === "p" || ch === "prev") {
-  //    setView("viewProducts", { filters, page: page - 1 < 0 ? 0 : page - 1 });
-  //  }
-  //
-  //  ch = ch.split(" ");
-  //
-  //  if (ch[0] === "search" && ch[1]) {
-  //    const _f = ch[1].split(",");
-  //    const f = [];
-  //    for (const e of _f) {
-  //      f.push({ name: e.split(":")[0], value: e.split(":")[1] });
-  //    }
-  //    setView("viewProducts", { filters: f });
-  //  }
-  //
-  //  if (session.isAdmin()) {
-  //    if (ch[0] === "discount" && ch[1]) {
-  //      setView("applyDiscount", ch[1]);
-  //    } else if (ch[0] === "delete" && ch[1]) {
-  //      setView("deleteProduct", ch[1]);
-  //    } else if (ch[0] === "qty" && ch[1]) {
-  //      setView("qtyProduct", ch[1]);
-  //    }
-  //  } else if (!session.isAdmin()) {
-  //    if (ch[0] === "add" && ch[1]) {
-  //      const product_code = ch[1];
-  //      const qty = ch[2];
-  //    }
-  //  }
-  //},
+    print(
+      "Invalid input. Make sure your input follows the expected format",
+      "error",
+    );
+  },
+  viewProducts: async (session, setView, data) => {
+    let filters = [];
+    let page = 0;
+
+    if (data && data.filters) {
+      filters = data.filters;
+    }
+
+    if (data && data.page) {
+      page = data.page;
+    }
+
+    print("Products", "h2");
+    print(`Current page: ${page + 1}`, "msg");
+    print("[n]ext Next page");
+    print("[p]rev Previous page");
+    print("0 Go back");
+
+    if (session.isAdmin()) {
+      print(
+        "To create a new product, type 'create' followed by its name separated by a colon",
+        "info",
+      );
+      print("Example: create memory module", "info");
+      print(
+        "To add a discount to a product, type 'discount' followed by the products index",
+        "info",
+      );
+      print(
+        "To delete a product, type 'delete' followed by the products index",
+        "info",
+      );
+      print(
+        "To change the quantity of a product, type 'qty' followed by the products index",
+        "info",
+      );
+    } else {
+      print(
+        "To add a product to your cart, type 'add' followed by the products index and the quantity you want to add separated by a colon",
+        "info",
+      );
+      print("Example: add 23:2", "info");
+    }
+
+    print(
+      "To filter for products, type 'search' followed by the filters separated by comma",
+      "info",
+    );
+    print("Example: search name:harddrive,minprice:12.00", "info");
+    print(
+      "Available filters: code, name, supplier, minprice, maxprice",
+      "info",
+    );
+
+    if (filters.length > 0) {
+      print("Currently applied filters:", "interactive");
+      for (const { name, value } of filters) {
+        console.log(`${name}: ${value}`);
+      }
+    }
+
+    // Build dynamic filtering conditions
+    let whereClauses = sql``;
+    if (filters.length > 0) {
+      whereClauses = sql`WHERE `;
+      filters.forEach((filter, index) => {
+        const filterClause = sql`
+        ${
+          filter.name === "code"
+            ? sql`sp.product_code::TEXT ILIKE ${"%" + filter.value + "%"}`
+            : filter.name === "name"
+              ? sql`p.product_name ILIKE ${"%" + filter.value + "%"}`
+              : filter.name === "supplier"
+                ? sql`sp.supplier_name ILIKE ${"%" + filter.value + "%"}`
+                : filter.name === "minprice"
+                  ? sql`sp.product_price >= ${parseFloat(filter.value) * 100}`
+                  : filter.name === "maxprice"
+                    ? sql`sp.product_price <= ${parseFloat(filter.value) * 100}`
+                    : sql``
+        }
+      `;
+
+        if (index > 0) {
+          whereClauses = sql`${whereClauses} AND ${filterClause}`;
+        } else {
+          whereClauses = sql`${whereClauses} ${filterClause}`;
+        }
+      });
+    }
+
+    const res = await sql`
+  SELECT sp.id as idx,
+         sp.supplier_name as supplier,
+         sp.product_code as code,
+         sp.product_price as price,  -- Original price in cents
+         sp.product_quantity as quantity,
+         p.product_name as name,
+         COALESCE(MAX(d.discount_amount), 0) AS discount,  -- Highest discount percentage
+         COUNT(d.discount_code) AS discount_count  -- Number of active discounts
+  FROM supplier_product sp
+  JOIN product p ON sp.product_code = p.product_code
+  LEFT JOIN product_discount pd ON sp.product_code = pd.product_code 
+    AND pd.discount_date_start <= NOW() 
+    AND pd.discount_date_end >= NOW()
+  LEFT JOIN discount d ON pd.discount_code = d.discount_code
+  ${whereClauses}
+  GROUP BY sp.id, sp.supplier_name, sp.product_code, sp.product_price, sp.product_quantity, p.product_name
+  ORDER BY sp.id
+  LIMIT 20 OFFSET ${20 * page}
+`;
+    print(
+      "Index | Code | Supplier | Name | Stock | Price | Discount | Final Price",
+      "msg",
+    );
+
+    for (const {
+      idx,
+      supplier,
+      code,
+      price,
+      quantity,
+      name,
+      discount,
+      discount_count,
+    } of res) {
+      const discountNotice =
+        discount_count > 0 ? `(${discount_count} discounts applied)` : "";
+      const finalPrice = price * (1 - discount / 100); // Apply percentage discount
+
+      console.log(
+        `${idx} | ${code} | ${supplier} | ${name} | ${quantity}pcs | ${(price / 100).toFixed(2)}$ | ${discount}% ${discountNotice} | ${(finalPrice / 100).toFixed(2)}$`,
+      );
+    }
+    // Handle user input
+    let ch = await input();
+    if (ch === "0") {
+      setView("main");
+    } else if (ch === "n" || ch === "next") {
+      setView("viewProducts", { filters, page: page + 1 });
+    } else if (ch === "p" || ch === "prev") {
+      setView("viewProducts", { filters, page: Math.max(0, page - 1) });
+    }
+
+    ch = ch.split(" ");
+
+    if (ch[0] === "search" && ch[1]) {
+      const _f = ch[1].split(",");
+      const f = [];
+      for (const e of _f) {
+        const [key, value] = e.split(":");
+        if (value) {
+          f.push({ name: key, value });
+        }
+      }
+      setView("viewProducts", { filters: f, page: 0 });
+    }
+
+    if (session.isAdmin()) {
+      if (ch[0] === "discount" && ch[1]) {
+        setView("applyDiscount", ch[1]);
+      } else if (ch[0] === "delete" && ch[1]) {
+        setView("deleteProduct", ch[1]);
+      } else if (ch[0] === "qty" && ch[1]) {
+        setView("qtyProduct", ch[1]);
+      } else if (ch[0] === "create" && ch[1]) {
+        const pName = ch.slice(1).join(" ");
+        const msg =
+          await sql`INSERT INTO product (product_name) VALUES (${pName})`;
+        if (msg.count) {
+          print("Product created", "msg");
+          await input();
+        } else {
+          print("Could not create product", "error");
+          await input();
+        }
+      }
+    } else if (!session.isAdmin()) {
+      if (ch[0] === "add" && ch[1]) {
+        const [idx, qty] = ch[1].split(":");
+        const msg =
+          await sql`SELECT add_product_to_cart(${session.user}, ${idx}, ${qty}) AS message`;
+        print(msg[0].message, "msg");
+        await input();
+        return;
+      }
+    }
+
+    print(
+      "Invalid input. Make sure your input follows the expected format",
+      "error",
+    );
+  },
   applyDiscount: async (_, setView, idx) => {
-    console.log("=== APPLY DISCOUNT ===");
+    print("Apply discount", "h2");
+    print("0 Go back");
     const res =
       await sql`SELECT * from supplier_product sp JOIN product p ON sp.product_code = p.product_code WHERE id = ${idx}`;
     if (res.length) {
-      console.log(
-        `Selected product code: [${res[0].product_code}]\nNote that this will apply the discount code to all products with the product code`,
+      print(`Selected product code: ${res[0].product_code}`, "msg");
+      print(
+        "To choose the discount to apply, input the name of the discount, followed by your desired start date and end date separated with colons",
+        "info",
       );
-      console.log(
-        "Separated by colons (:), Input the name, start date and end date of the discount you want to apply to the product",
-      );
-      console.log("Date must be formatted like YYYY-MM-DD");
-      console.log("Example: XMAS:2025-12-01:2025-12-31");
-      console.log("Type 0 to go back");
-      console.log("\n[Discount name - discount amount]");
+      print("Dates must be formatted YYYY-MM-DD", "info");
+      print("Example: XMAS:2025-12-02:20205-12-31", "info");
+      print("Discount name | Discount amount", "msg");
       const d = await sql`SELECT * FROM discount;`;
       for (const { discount_code, discount_amount } of d) {
-        console.log(`${discount_code} - ${discount_amount}%`);
+        console.log(`${discount_code} | ${discount_amount}%`);
       }
     } else {
-      console.log("Could not find product with index", idx);
+      print(`Could not find product with index ${idx}`, "error");
+      await input();
+      setView("viewProducts");
     }
-    let ch = await input();
 
+    let ch = await input();
     if (ch === "0") {
       setView("viewProducts");
     }
@@ -585,76 +863,97 @@ WHERE order_state = 'shopping'
         const code = ch[0];
         const startDate = ch[1];
         const endDate = ch[2];
-        try {
-          const msg =
-            await sql`SELECT apply_discount_to_product(${res[0].product_code}, ${code}, ${startDate}, ${endDate}) AS message`;
-          console.log(msg[0].message);
-        } catch (error) {
-          console.error(error);
-        }
+        const msg =
+          await sql`SELECT apply_discount_to_product(${res[0].product_code}, ${code}, ${startDate}, ${endDate}) AS message`;
+        print(msg[0].message, "msg");
         await input();
       }
     }
   },
   deleteProduct: async (_, setView, idx) => {
-    console.log("=== DELETE PRODUCT ===");
+    print("Delete product", "h2");
+    print("[y]es Delete product");
+    print("[n]o Abort deletion");
+    print("0 Go back");
     const res =
       await sql`SELECT * from supplier_product sp JOIN product p ON sp.product_code = p.product_code WHERE id = ${idx}`;
     if (res.length) {
-      console.log(
-        `Selected product: [${res[0].product_code}] ${res[0].product_name} - ${res[0].supplier_name}`,
+      print(
+        `Selected product: ${res[0].product_code} | ${res[0].supplier_name} | ${res[0].product_name}`,
+        "msg",
       );
-      console.log("Type [y]es to confirm deletion of the above product");
-      console.log(
+      print(
         "This will also remove the product from any pending orders and customer shopping carts that have not been confirmed",
+        "info",
       );
     } else {
-      console.log("Could not find product with index", idx);
+      print(`Could not find product with index ${idx}`, "error");
+      await input();
+      setView("viewProducts");
     }
-    console.log("Type 0 to go back");
+
     const ch = await input();
     if (ch === "0") {
       setView("viewProducts");
     } else if (ch === "y" || ch === "yes") {
       const msg =
         await sql`SELECT delete_product_from_supplier(${res[0].supplier_name}, ${res[0].product_code}) AS message`;
-      console.log(msg[0].message);
+      print(msg[0].message, "msg");
+      await input();
+      setView("viewProducts");
+    } else if (ch === "n" || ch === "no") {
+      setView("viewProducts");
+    } else {
+      print(
+        "Invalid input. Make sure your input follows the expected format",
+        "error",
+      );
       await input();
     }
   },
   qtyProduct: async (_, setView, idx) => {
-    console.log("=== CHANGE QUANTITY ===");
+    print("Change quantity", "h2");
+    print("0 Go back");
     const res =
       await sql`SELECT * from supplier_product sp JOIN product p ON sp.product_code = p.product_code WHERE id = ${idx}`;
     if (res.length) {
-      console.log(
-        `Selected product: [${res[0].product_code}] ${res[0].product_name} - ${res[0].supplier_name}`,
+      print(
+        `Selected product: ${res[0].product_code} | ${res[0].supplier_name} | ${res[0].product_name}`,
+        "msg",
       );
-      console.log(`Current quantity: ${res[0].product_quantity}`);
+      print(`Current stock: ${res[0].product_quantity}`, "msg");
     } else {
-      console.log("Could not find product with index", idx);
+      print(`Could not find product with index ${idx}`, "error");
+      await input();
+      setView("viewProducts");
     }
-    console.log(
-      "Input the amount to change (can be a positive or negative integer):",
+    print(
+      "Input the amount (positive or negative integer) you wish to change the stock by",
+      "info",
     );
-    console.log("Example: -5");
-    console.log("Type 0 to go back");
+    print("Example: -5", "info");
     let ch = await input();
     if (ch === "0") {
       setView("viewProducts");
     } else if (ch[0] === "+" || (ch[0] === "-" && ch.length >= 2)) {
       const msg =
         await sql`SELECT update_supplier_product_quantity(${idx}, ${ch}) AS message`;
+      print(msg[0].message, "msg");
       console.log(msg[0].message);
-      console.log("Press any key to continue");
       await input();
+      setView("viewProducts");
+    } else {
+      print(
+        "Invalid input. Make sure your input follows the expected format",
+        "error",
+      );
     }
   },
   manageDiscounts: async (_, setView) => {
-    console.log("=== MANAGE DISCOUNTS ===");
-    console.log("1. List discounts");
-    console.log("2. Add a new discount");
-    console.log("0. Go back");
+    print("Manage discounts", "h2");
+    print("1 List discounts");
+    print("2 Add a new discount");
+    print("0 Go back");
     const ch = await input();
     if (ch === "1") {
       setView("listDiscounts");
@@ -662,18 +961,24 @@ WHERE order_state = 'shopping'
       setView("addDiscount");
     } else if (ch === "0") {
       setView("main");
+    } else {
+      print(
+        "Invalid input. Make sure your input follows the expected format",
+        "error",
+      );
     }
   },
   listDiscounts: async (_, setView) => {
-    console.log("=== DISCOUNTS ===");
-    console.log(
-      "To see a discounts history, type 'history' followed by the discount code",
+    print("Discounts", "h2");
+    print("0 Go back");
+    print(
+      "To see the history of a discount, type 'history' followed by the discount code",
+      "info",
     );
-    console.log("Type 0 to go back\n");
-    console.log("[Discount name - discount amount]");
+    print("Discount name | Discount amount", "msg");
     const res = await sql`SELECT * FROM discount;`;
     for (const { discount_code, discount_amount } of res) {
-      console.log(`${discount_code} - ${discount_amount}%`);
+      console.log(`${discount_code} | ${discount_amount}%`);
     }
     const ch = await input();
     if (ch.split(" ")[0] === "history" && ch.split(" ")[1]) {
@@ -681,12 +986,17 @@ WHERE order_state = 'shopping'
       setView("discountHistory", discountCode);
     } else if (ch === "0") {
       setView("manageDiscounts");
+    } else {
+      print(
+        "Invalid input. Make sure your input follows the expected format",
+        "error",
+      );
     }
   },
   discountHistory: async (_, setView, discountCode) => {
-    console.log(`=== DISCOUNT HISTORY ===`);
-    console.log("Current discount:", discountCode);
-    console.log("Type 0 to go back");
+    print("Discount history", "h2");
+    print("0 Go back");
+    print(`Current discount: ${discountCode}`, "msg");
 
     const res = await sql`
     SELECT 
@@ -717,33 +1027,44 @@ WHERE order_state = 'shopping'
         return `${year}${month}${day}`;
       };
 
+      print(
+        "Code | Product | Price after discount | Start date | End date",
+        "msg",
+      );
       for (const e of res) {
         const startDate = formatDate(e.discount_date_start);
         const endDate = formatDate(e.discount_date_end);
         const price = e.product_price / 100;
         console.log(
-          `[${e.product_code}] ${e.product_name} - ${(price * (1 - e.discount_amount / 100)).toFixed(2)} (${e.discount_amount}% off) (${startDate} - ${endDate})`,
+          `${e.product_code} | ${e.product_name} | ${(price * (1 - e.discount_amount / 100)).toFixed(2)} (${e.discount_amount}% off) | ${startDate} - ${endDate}`,
         );
       }
     } else {
-      console.log("No history found");
+      print("No history found", "error");
+      await input();
+      setView("listDiscounts");
     }
 
     let ch = await input();
     if (ch === "0") {
       setView("listDiscounts");
       return;
+    } else {
+      print(
+        "Invalid input. Make sure your input follows the expected format",
+        "error",
+      );
     }
   },
 
   addDiscount: async (_, setView) => {
-    console.log("=== NEW DISCOUNT ===");
-    console.log(
-      "Type the discount name with the percentage amount separated by a colon (:)",
+    print("Add new discount", "h2");
+    print("0 Go back");
+    print(
+      "To add a new discount, type the name and the amount (1 - 100) separated by a colon",
+      "info",
     );
-    console.log("Percentage must be between 1 and 100");
-    console.log("Example: BLACKFRIDAY:75");
-    console.log("Type 0 to got back");
+    print("Example: BLACKFRIDAY:75", "info");
     const ch = await input();
     if (ch.indexOf(":") !== -1) {
       const discountCode = ch.split(":")[0];
@@ -753,7 +1074,7 @@ WHERE order_state = 'shopping'
   SELECT add_discount(${discountCode}, ${discountAmount}) AS message;
 `;
 
-        console.log(msg[0].message);
+        print(msg[0].message, "msg");
         await input();
       }
     } else if (ch === "0") {
@@ -761,10 +1082,10 @@ WHERE order_state = 'shopping'
     }
   },
   manageSuppliers: async (_, setView) => {
-    console.log("=== MANAGE SUPPLIERS ===");
-    console.log("1. Add new supplier");
-    console.log("2. List suppliers");
-    console.log("0. Go back");
+    print("Manage suppliers", "h2");
+    print("1 Add new supplier");
+    print("2 List suppliers");
+    print("0 Go back");
     const ch = await input();
 
     if (ch === "1") {
@@ -773,41 +1094,46 @@ WHERE order_state = 'shopping'
       setView("viewSuppliers");
     } else if (ch === "0") {
       setView("main");
+    } else {
+      print(
+        "Invalid input. Make sure your input follows the expected format",
+        "error",
+      );
     }
   },
   addSupplier: async (_, setView) => {
-    console.log("=== ADD SUPPLIER ===");
-    console.log("Type 0 at any time to cancel the registration process");
+    print("Add new supplier", "h2");
+    print("0 Go back");
+    print("Enter supplier name:", "interactive");
 
-    console.log("Input supplier name:");
     const name = await input();
     if (name === "0") {
       setView("manageSuppliers");
       return;
     }
 
-    console.log("Input their phone number (10 characters):");
+    print("Enter supplier phone number:", "interactive");
     const phone = await input();
     if (phone === "0") {
       setView("manageSuppliers");
       return;
     }
 
-    console.log("Input their address:");
+    print("Enter supplier address:", "interactive");
     const address = await input();
     if (address === "0") {
       setView("manageSuppliers");
       return;
     }
 
-    console.log("Input their city:");
+    print("Enter supplier city:", "interactive");
     const city = await input();
     if (city === "0") {
       setView("manageSuppliers");
       return;
     }
 
-    console.log("Input their country:");
+    print("Enter supplier country:", "interactive");
     const country = await input();
     if (country === "0") {
       setView("manageSuppliers");
@@ -826,18 +1152,21 @@ WHERE order_state = 'shopping'
   SELECT register_supplier(${ns.name}, ${ns.phone}, ${ns.address}, ${ns.city}, ${ns.country}) AS message;
 `;
 
-    console.log(msg[0].message);
+    print(msg[0].message, "msg");
     await input();
   },
   viewSuppliers: async (_, setView, page = 0) => {
-    console.log("=== SUPPLIERS ===");
-    console.log("Current page: ", page + 1);
-    console.log("Type [n]ext/[p]rev to change page");
-    console.log(
-      "Type 'add' followed by the supplier name to add a product to that supplier",
+    print("Suppliers", "h2");
+    print("[n]ext Next page");
+    print("[p]rev Previous page");
+    print("0 Go back");
+    print(`Current page: ${page + 1}`, "msg");
+    print(
+      "To add a product to a supplier, type 'add' followed by the supplier name",
+      "info",
     );
-    console.log("Type 0 to go back");
     const res = await sql`SELECT * FROM supplier LIMIT 20 OFFSET ${20 * page};`;
+    print("Name | Address | City | Country | Phone number", "msg");
     for (const {
       supplier_name,
       supplier_phone_number,
@@ -846,7 +1175,7 @@ WHERE order_state = 'shopping'
       supplier_country,
     } of res) {
       console.log(
-        `${supplier_name} - ${supplier_address}, ${supplier_city}, ${supplier_country} (${supplier_phone_number})`,
+        `${supplier_name} | ${supplier_address} | ${supplier_city} | ${supplier_country} | ${supplier_phone_number}`,
       );
     }
     let ch = await input();
@@ -867,59 +1196,110 @@ WHERE order_state = 'shopping'
         supplierName: cName,
         filters: null,
       });
+    } else {
+      print(
+        "Invalid input. Make sure your input follows the expected format",
+        "error",
+      );
     }
   },
   addProductToSupplier: async (
     _,
     setView,
-    { supplierName, filters, page = 0 },
+    { supplierName, filters = [], page = 0 },
   ) => {
-    console.log("=== ADD PRODUCT TO SUPPLIER ===");
-    console.log("Selected supplier:", supplierName);
-    console.log(
-      "Type the index of the product you want to add, followed by the price (in cents) and qty separated with a colon",
+    filters = filters ?? [];
+    page = page ?? 0;
+    print("Add product to supplier", "h2");
+    print(`Selected supplier: ${supplierName}`, "msg");
+    print("[n]ext Next page");
+    print("[p]rev Previous page");
+    print("0 Go back");
+    print(
+      "Type the index of the product you want to add, followed by the price (in cents) and quantity separated with colons",
+      "info",
     );
-    console.log(
-      "Example: 2:100:5 would add 5 qty of product with index 2 to the selected supplier with a price of 1000 cents",
+    print("Example: 2:1599:5", "info");
+    print(
+      "To filter for products, type 'search' followed by the filters separated by comma",
+      "info",
     );
-    console.log(
-      "\nTo filter for products, type 'search' followed by the filter type and its value separated with a colon (:)",
-    );
-    console.log("Filters are separated by a comma");
-    console.log("Do not use any spaces in your filter list");
-    console.log("Available filters: code, name, supplier, minprice, maxprice");
-    console.log("Example: name:harddrive,minprice:12.00");
+    print("Example: search name:harddrive", "info");
+    print("Available filters: code, name", "info");
 
-    if (filters && filters.length > 0) {
-      console.log("[ACTIVE FILTERS]");
+    if (filters.length > 0) {
+      print("Currently applied filters:", "interactive");
       for (const { name, value } of filters) {
         console.log(`${name}: ${value}`);
       }
     }
-    console.log("Type 0 to go back");
+
+    // Build dynamic filtering conditions
+    let whereClauses = sql``;
+    if (filters.length > 0) {
+      whereClauses = sql`WHERE `;
+      filters.forEach((filter, index) => {
+        const filterClause = sql`
+        ${
+          filter.name === "code"
+            ? sql`p.product_code::TEXT ILIKE ${"%" + filter.value + "%"}`
+            : filter.name === "name"
+              ? sql`p.product_name ILIKE ${"%" + filter.value + "%"}`
+              : sql``
+        }
+      `;
+
+        if (index > 0) {
+          whereClauses = sql`${whereClauses} AND ${filterClause}`;
+        } else {
+          whereClauses = sql`${whereClauses} ${filterClause}`;
+        }
+      });
+    }
 
     const res = await sql`
-      SELECT sp.id as idx,
-      p.product_code as code,
-      p.product_name as name
-      FROM supplier_product sp JOIN product p ON sp.product_code = p.product_code
-      WHERE sp.supplier_name != ${supplierName}
-      AND sp.product_code NOT IN (
-        SELECT product_code FROM supplier_product WHERE supplier_name = ${supplierName}
-      )
-      ORDER BY sp.id
-      LIMIT 20
-      OFFSET ${20 * page};
-    `;
+    SELECT p.product_code as code,
+           p.product_name as name
+    FROM product p 
+    ${whereClauses}
+    ORDER BY p.product_code
+    LIMIT 20 OFFSET ${20 * page}
+  `;
 
-    for (const { idx, code, name } of res) {
-      console.log(`${idx}. [${code}] ${name}`);
+    print("Code | Name", "msg");
+    for (const { code, name } of res) {
+      console.log(`${code} | ${name}`);
     }
 
     let ch = await input();
     if (ch === "0") {
       setView("viewSuppliers");
-    } else if (ch) {
+    } else if (ch === "n" || ch === "next") {
+      setView("addProductToSupplier", {
+        supplierName,
+        filters,
+        page: page + 1,
+      });
+    } else if (ch === "p" || ch === "prev") {
+      setView("addProductToSupplier", {
+        supplierName,
+        filters,
+        page: Math.max(0, page - 1),
+      });
+    } else if (ch.indexOf("search") !== -1) {
+      ch = ch.split(" ");
+      if (ch[0] === "search" && ch[1]) {
+        const _f = ch[1].split(",");
+        const f = [];
+        for (const e of _f) {
+          const [key, value] = e.split(":");
+          if (value) {
+            f.push({ name: key, value });
+          }
+        }
+        setView("addProductToSupplier", { supplierName, filters: f, page: 0 });
+      }
+    } else {
       ch = ch.split(":");
       if (ch[0] && ch[1] && ch[2]) {
         const idx = ch[0];
@@ -930,36 +1310,42 @@ WHERE order_state = 'shopping'
     `;
 
         if (productRes.length === 0) {
-          console.log("Invalid selection. Product not found.");
+          print("Product not found", "error");
           return;
         }
 
         const productCode = productRes[0].product_code;
-
         const msg = await sql`
       INSERT INTO supplier_product (supplier_name, product_code, product_price, product_quantity) VALUES
       (${supplierName}, ${productCode}, ${price}, ${qty})
     `;
         if (msg.count) {
-          console.log("Product successfully added to supplier!");
+          print("Product successfully added to supplier", "msg");
+          await input();
+          setView("viewSuppliers");
         } else {
-          console.log("Something went wrong");
+          print("Product could not be added to supplier", "error");
+          await input();
+          setView("viewSuppliers");
         }
-        await input();
+      } else {
+        print(
+          "Invalid input. Make sure your input follows the expected format",
+          "error",
+        );
       }
-    } else {
-      console.log("Use index:price:quantity format");
     }
   },
   confirmOrders: async (_, setView) => {
-    console.log("=== CONFIRM ORDERS ===");
-    console.log("Type 'confirm' followed by the order id to confirm an order");
-    console.log("Type 0 to go back");
+    print("Confirm orders", "h2");
+    print("0 Go back");
+    print("To confirm an order, type 'confirm' followed by its ID", "info");
     const res =
       await sql`SELECT * FROM customer_order WHERE order_state = 'placed'`;
+    print("Order ID | Customer | Date", "msg");
     for (const order of res) {
       console.log(
-        `Order ID: ${order.order_id} by ${order.customer_mail_address} (${order.order_date})`,
+        `${order.order_id} | ${order.customer_mail_address} | ${order.order_date}`,
       );
     }
     let ch = await input();

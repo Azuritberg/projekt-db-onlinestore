@@ -1,6 +1,7 @@
 import postgres from "https://deno.land/x/postgresjs/mod.js";
 import { views } from "./views.js";
 import { Session } from "./session.js";
+import { print } from "./utils.js";
 
 function initSQL() {
   //const ch = prompt("sql-less mode? (y/n)");
@@ -23,6 +24,7 @@ async function main() {
 
   while (true) {
     console.clear();
+    print("Online Store", "h1");
     await views[currentView](
       session,
       (nextView, nextData = null) => {
