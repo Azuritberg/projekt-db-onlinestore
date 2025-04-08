@@ -184,6 +184,10 @@ export const views = {
       print("orders View your orders");
     }
     print("sale View products currently on sale");
+    if (session.isAdmin()) {
+      print("top See top products sold");
+    }
+
     print("1 View products");
     if (session.isAdmin()) {
       print("2 Manage discounts");
@@ -210,11 +214,40 @@ export const views = {
       setView("start");
     } else if (ch === "sale") {
       setView("viewSales");
+    } else if (ch === "top" && session.isAdmin()) {
+      setView("viewTop");
     } else {
       print(
         "Invalid input. Make sure your input follows the expected format",
         "error",
       );
+    }
+  },
+  viewTop: async (_, setView) => {
+    print("Top sales by month", "h2");
+    print("0 Go back");
+    print("Month | Product Code | Product | Supplier | Units sold", "msg");
+    const res = await sql`SELECT * FROM max_ordered_products_by_month;`;
+
+    for (const {
+      order_month,
+      product_code,
+      product_name,
+      product_supplier_name,
+      total_quantity,
+    } of res) {
+      const formattedMonth = new Date(order_month).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+      });
+
+      console.log(
+        `${formattedMonth} | ${product_code} | ${product_name} | ${product_supplier_name} | ${total_quantity}pcs`,
+      );
+    }
+    const ch = await input();
+    if (ch === "0") {
+      setView("main");
     }
   },
   cart: async (session, setView) => {
@@ -235,8 +268,8 @@ export const views = {
          sp.product_price,
          (sp.product_price * cart.product_quantity) AS price,
          sp.id AS idx,
-         COALESCE(MAX(d.discount_amount), 0) AS discount,  -- Highest discount percentage
-         COUNT(d.discount_code) AS discount_count  -- Number of active discounts
+         COALESCE(MAX(d.discount_amount), 0) AS discount,  
+         COUNT(d.discount_code) AS discount_count  
   FROM get_or_create_cart(${session.user}) AS cart
   JOIN supplier_product sp 
     ON cart.product_code = sp.product_code 
@@ -260,43 +293,13 @@ export const views = {
         "msg",
       );
       for (const product of res) {
-        const discountNotice =
-          product.discount_count > 0
-            ? `(${product.discount_count} discounts applied)`
-            : "";
-        const finalPrice = product.price * (1 - product.discount / 100); // Apply discount
+        const finalPrice = product.price * (1 - product.discount / 100);
 
         console.log(
-          `${product.idx} | ${product.product_supplier_name} | ${product.product_name} | ${product.product_quantity}pcs | ${(product.price / 100).toFixed(2)}$ | ${product.discount}% ${discountNotice} | ${(finalPrice / 100).toFixed(2)}$`,
+          `${product.idx} | ${product.product_supplier_name} | ${product.product_name} | ${product.product_quantity}pcs | ${(product.price / 100).toFixed(2)}$ | ${product.discount}% | ${(finalPrice / 100).toFixed(2)}$`,
         );
       }
     }
-    //  const res = await sql`select p.product_name,
-    //    cart.product_supplier_name,
-    //    cart.product_quantity,
-    //    sp.product_price,
-    //    (sp.product_price * cart.product_quantity) as price,
-    //    sp.id as idx from get_or_create_cart(${session.user}) as cart
-    //    JOIN supplier_product sp
-    //    ON cart.product_code = sp.product_code
-    //    AND cart.product_supplier_name = sp.supplier_name
-    //    JOIN product p
-    //    ON p.product_code = sp.product_code;
-    //`;
-    //  //
-    //  // TODO: APPLY DISCOUNTS
-    //  //
-    //  if (!res.length || !res[0].product_name) {
-    //    console.log("Cart is empty");
-    //  } else {
-    //    print("Index | Supplier | Product | Qty | Price", "msg");
-    //    for (const product of res) {
-    //      console.log(
-    //        `${product.idx} | ${product.product_supplier_name} | ${product.product_name} | ${product.product_quantity}pcs | ${product.price / 100}$`,
-    //      );
-    //    }
-    //  }
-
     let ch = await input();
     if (ch === "0") {
       setView("main");
@@ -319,7 +322,6 @@ export const views = {
         await input();
       }
     } else {
-      // TODO: CHECK INDEXOF + OR - HERE INSTEAD
       if (ch.indexOf("+") !== -1) {
         ch = ch.split("+");
         if (ch[0] && ch[1]) {
@@ -379,19 +381,23 @@ export const views = {
     );
     print("0 Go back");
     const res = await sql`
-      SELECT * FROM Customer_Order WHERE customer_mail_address = ${session.user};
+  SELECT * FROM Customer_Order WHERE customer_mail_address = ${session.user};
 `;
+
     if (!res.length) {
       console.log("No orders found");
     } else {
       print("Order state | Order ID | Order date", "msg");
       for (const order of res) {
+        const formattedDate = new Date(order.order_date)
+          .toISOString()
+          .split("T")[0];
+
         console.log(
-          `${order.order_state} | ${order.order_id} | ${order.order_date}`,
+          `${order.order_state} | ${order.order_id} | ${formattedDate}`,
         );
       }
     }
-
     let ch = await input();
     if (ch === "0") {
       setView("main");
@@ -412,28 +418,69 @@ export const views = {
     }
   },
   viewOrder: async (_, setView, id) => {
-    const res =
-      await sql`SELECT p.product_name, si.product_supplier_name, si.product_quantity, co.order_date, co.order_state FROM customer_order co JOIN customer_product_shopping_item si ON co.order_id = si.order_id JOIN product p ON si.product_code = p.product_code WHERE co.order_id = ${id}`;
-    if (res.length) {
-    } else {
+    const res = await sql`
+    SELECT p.product_name, 
+           si.product_supplier_name, 
+           si.product_quantity, 
+           co.order_date, 
+           co.order_state, 
+           si.product_code
+    FROM customer_order co 
+    JOIN customer_product_shopping_item si 
+      ON co.order_id = si.order_id 
+    JOIN product p 
+      ON si.product_code = p.product_code 
+    WHERE co.order_id = ${id}`;
+
+    if (!res.length) {
       print("Could not find order", "error");
+      return;
     }
+
     print(`Viewing order: ${id}`, "msg");
     print(`Order state: ${res[0].order_state}`, "msg");
-    print(`Order placed ${res[0].order_date}`, "msg");
+    print(
+      `Order placed on: ${new Date(res[0].order_date).toLocaleDateString()}`,
+      "msg",
+    );
     print("0 Go back");
-    //
-    // TODO: ADD PRICE
-    //
-    print("Supplier | Product | Qty | Price");
+    print(
+      "Supplier | Product | Qty | Original Total Price | Discount | Final Total Price",
+      "msg",
+    );
+
     for (const product of res) {
+      const discountRes = await sql`
+      SELECT COALESCE(MAX(d.discount_amount), 0) AS discount 
+      FROM product_discount pd 
+      LEFT JOIN discount d 
+        ON pd.discount_code = d.discount_code
+      WHERE pd.product_code = ${product.product_code} 
+        AND pd.discount_date_start <= ${product.order_date} 
+        AND pd.discount_date_end >= ${product.order_date}`;
+
+      const discount = discountRes.length ? discountRes[0].discount : 0;
+      const originalPriceRes = await sql`
+      SELECT sp.product_price
+      FROM supplier_product sp
+      WHERE sp.product_code = ${product.product_code}
+      LIMIT 1`;
+
+      const originalPrice = originalPriceRes.length
+        ? originalPriceRes[0].product_price
+        : 0;
+
+      const originalTotalPrice = originalPrice * product.product_quantity;
+      const finalPrice = originalPrice * (1 - discount / 100);
+      const finalTotalPrice = finalPrice * product.product_quantity;
+
       console.log(
-        `${product.product_supplier_name} | ${product.product_name} | ${product.product_quantity}pcs | PRICE`,
+        `${product.product_supplier_name} | ${product.product_name} | ${product.product_quantity}pcs | ${(originalTotalPrice / 100).toFixed(2)}$ | ${discount}% | ${(finalTotalPrice / 100).toFixed(2)}$`,
       );
     }
 
     const ch = await input();
-    if (ch === 0) {
+    if (ch === "0") {
       setView("orders");
     } else {
       print(
@@ -503,7 +550,6 @@ export const views = {
       }
     }
 
-    // Build dynamic filtering conditions
     let whereClauses = sql``;
     if (filters.length > 0) {
       whereClauses = sql`WHERE `;
@@ -536,11 +582,11 @@ export const views = {
   SELECT sp.id as idx,
          sp.supplier_name as supplier,
          sp.product_code as code,
-         sp.product_price as price,  -- Original price in cents
+         sp.product_price as price,  
          sp.product_quantity as quantity,
          p.product_name as name,
-         COALESCE(MAX(d.discount_amount), 0) AS discount,  -- Highest discount percentage
-         COUNT(d.discount_code) AS discount_count  -- Number of active discounts
+         COALESCE(MAX(d.discount_amount), 0) AS discount,  
+         COUNT(d.discount_code) AS discount_count  
   FROM supplier_product sp
   JOIN product p ON sp.product_code = p.product_code
   LEFT JOIN product_discount pd ON sp.product_code = pd.product_code 
@@ -549,7 +595,7 @@ export const views = {
   LEFT JOIN discount d ON pd.discount_code = d.discount_code
   ${whereClauses}
   GROUP BY sp.id, sp.supplier_name, sp.product_code, sp.product_price, sp.product_quantity, p.product_name
-  HAVING COUNT(d.discount_code) > 0  -- Only include products with active discounts
+  HAVING COUNT(d.discount_code) > 0  
   ORDER BY sp.id
   LIMIT 20 OFFSET ${20 * page}
 `;
@@ -567,17 +613,14 @@ export const views = {
       quantity,
       name,
       discount,
-      discount_count,
     } of res) {
-      const discountNotice =
-        discount_count > 0 ? `(${discount_count} discounts applied)` : "";
-      const finalPrice = price * (1 - discount / 100); // Apply percentage discount
+      const finalPrice = price * (1 - discount / 100);
 
       console.log(
-        `${idx} | ${code} | ${supplier} | ${name} | ${quantity}pcs | ${(price / 100).toFixed(2)}$ | ${discount}% ${discountNotice} | ${(finalPrice / 100).toFixed(2)}$`,
+        `${idx} | ${code} | ${supplier} | ${name} | ${quantity}pcs | ${(price / 100).toFixed(2)}$ | ${discount}% | ${(finalPrice / 100).toFixed(2)}$`,
       );
     }
-    // Handle user input
+
     let ch = await input();
     if (ch === "0") {
       setView("main");
@@ -697,7 +740,6 @@ export const views = {
       }
     }
 
-    // Build dynamic filtering conditions
     let whereClauses = sql``;
     if (filters.length > 0) {
       whereClauses = sql`WHERE `;
@@ -730,11 +772,11 @@ export const views = {
   SELECT sp.id as idx,
          sp.supplier_name as supplier,
          sp.product_code as code,
-         sp.product_price as price,  -- Original price in cents
+         sp.product_price as price,  
          sp.product_quantity as quantity,
          p.product_name as name,
-         COALESCE(MAX(d.discount_amount), 0) AS discount,  -- Highest discount percentage
-         COUNT(d.discount_code) AS discount_count  -- Number of active discounts
+         COALESCE(MAX(d.discount_amount), 0) AS discount,  
+         COUNT(d.discount_code) AS discount_count  
   FROM supplier_product sp
   JOIN product p ON sp.product_code = p.product_code
   LEFT JOIN product_discount pd ON sp.product_code = pd.product_code 
@@ -759,17 +801,14 @@ export const views = {
       quantity,
       name,
       discount,
-      discount_count,
     } of res) {
-      const discountNotice =
-        discount_count > 0 ? `(${discount_count} discounts applied)` : "";
-      const finalPrice = price * (1 - discount / 100); // Apply percentage discount
+      const finalPrice = price * (1 - discount / 100);
 
       console.log(
-        `${idx} | ${code} | ${supplier} | ${name} | ${quantity}pcs | ${(price / 100).toFixed(2)}$ | ${discount}% ${discountNotice} | ${(finalPrice / 100).toFixed(2)}$`,
+        `${idx} | ${code} | ${supplier} | ${name} | ${quantity}pcs | ${(price / 100).toFixed(2)}$ | ${discount}% | ${(finalPrice / 100).toFixed(2)}$`,
       );
     }
-    // Handle user input
+
     let ch = await input();
     if (ch === "0") {
       setView("main");
@@ -834,7 +873,10 @@ export const views = {
     const res =
       await sql`SELECT * from supplier_product sp JOIN product p ON sp.product_code = p.product_code WHERE id = ${idx}`;
     if (res.length) {
-      print(`Selected product code: ${res[0].product_code}`, "msg");
+      print(
+        `Selected product code: ${res[0].product_code} - ${res[0].product_name}`,
+        "msg",
+      );
       print(
         "To choose the discount to apply, input the name of the discount, followed by your desired start date and end date separated with colons",
         "info",
@@ -1216,7 +1258,7 @@ export const views = {
     print("[p]rev Previous page");
     print("0 Go back");
     print(
-      "Type the index of the product you want to add, followed by the price (in cents) and quantity separated with colons",
+      "Type the code of the product you want to add, followed by the price (in cents) and quantity separated with colons",
       "info",
     );
     print("Example: 2:1599:5", "info");
@@ -1234,7 +1276,6 @@ export const views = {
       }
     }
 
-    // Build dynamic filtering conditions
     let whereClauses = sql``;
     if (filters.length > 0) {
       whereClauses = sql`WHERE `;
@@ -1302,32 +1343,14 @@ export const views = {
     } else {
       ch = ch.split(":");
       if (ch[0] && ch[1] && ch[2]) {
-        const idx = ch[0];
-        const price = ch[1];
-        const qty = ch[2];
-        const productRes = await sql`
-      SELECT product_code FROM supplier_product WHERE id = ${idx}
-    `;
-
-        if (productRes.length === 0) {
-          print("Product not found", "error");
-          return;
-        }
-
-        const productCode = productRes[0].product_code;
-        const msg = await sql`
-      INSERT INTO supplier_product (supplier_name, product_code, product_price, product_quantity) VALUES
-      (${supplierName}, ${productCode}, ${price}, ${qty})
-    `;
-        if (msg.count) {
-          print("Product successfully added to supplier", "msg");
-          await input();
-          setView("viewSuppliers");
-        } else {
-          print("Product could not be added to supplier", "error");
-          await input();
-          setView("viewSuppliers");
-        }
+        const code = parseInt(ch[0]);
+        const price = parseInt(ch[1]);
+        const qty = parseInt(ch[2]);
+        console.log(code, price, qty, supplierName);
+        const msg =
+          await sql`SELECT add_product_to_supplier(${supplierName}, ${code}, ${price}, ${qty}) AS message`;
+        print(msg[0].message, "msg");
+        await input();
       } else {
         print(
           "Invalid input. Make sure your input follows the expected format",

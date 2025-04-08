@@ -4,11 +4,6 @@ import { Session } from "./session.js";
 import { print } from "./utils.js";
 
 function initSQL() {
-  //const ch = prompt("sql-less mode? (y/n)");
-  //if (ch === "y") {
-  //  return null;
-  //}
-
   let user, password, db;
 
   user = prompt("psql username:");
